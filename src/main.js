@@ -23,7 +23,7 @@ import {
 } from "./interactions.js";
 
 const SHOWCASE_Y_ROTATION =
-  Math.PI * 0.28;
+  Math.PI * 0.35;
 
 // =====================================================
 // SCÈNE
@@ -252,8 +252,23 @@ window.addEventListener(
   (event) => {
 
     if (event.code === "KeyR") {
-      playGiftDrop(
-        giftRoot
+      ribbonInteraction.disable();
+      ribbonInteraction.reset();
+
+      const introTimeline =
+        playGiftDrop(
+          giftRoot,
+          {
+            finalYRotation:
+              SHOWCASE_Y_ROTATION,
+          }
+        );
+
+      introTimeline.eventCallback(
+        "onComplete",
+        () => {
+          ribbonInteraction.enable();
+        }
       );
     }
 

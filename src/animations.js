@@ -3,7 +3,7 @@ import { gsap } from "gsap";
 export function playGiftDrop(
   gift,
   {
-    finalYRotation = -Math.PI * 0.22,
+    finalYRotation = Math.PI * 0.35,
   } = {}
 ) {
   gsap.killTweensOf(gift.position);
@@ -31,7 +31,7 @@ export function playGiftDrop(
     gift.position,
     {
       y: 0,
-      duration: 0.82,
+      duration: 1.8,
       ease: "power4.in",
     },
     0
@@ -43,7 +43,7 @@ export function playGiftDrop(
       y: finalYRotation + 0.15,
       x: 0.08,
       z: -0.24,
-      duration: 0.82,
+      duration: 1.8,
       ease: "power2.in",
     },
     0
@@ -56,8 +56,8 @@ export function playGiftDrop(
   tl.to(
     gift.position,
     {
-      y: 0.34,
-      duration: 0.14,
+      y: 0.3,
+      duration: 0.18,
       ease: "power2.out",
     }
   );
@@ -65,10 +65,10 @@ export function playGiftDrop(
   tl.to(
     gift.rotation,
     {
-      y: finalYRotation - 0.08,
+      y: finalYRotation - 0.2,
       x: -0.03,
-      z: 0.18,
-      duration: 0.16,
+      z: 0.2,
+      duration: 0.18,
       ease: "sine.out",
     },
     "<"
@@ -78,7 +78,7 @@ export function playGiftDrop(
     gift.position,
     {
       y: 0,
-      duration: 0.15,
+      duration: 0.22,
       ease: "power2.in",
     }
   );
@@ -86,10 +86,10 @@ export function playGiftDrop(
   tl.to(
     gift.rotation,
     {
-      y: finalYRotation + 0.05,
+      y: finalYRotation - 0.2 ,
       x: 0.03,
       z: -0.10,
-      duration: 0.18,
+      duration: 0.22,
       ease: "sine.inOut",
     },
     "<"
@@ -103,7 +103,7 @@ export function playGiftDrop(
     gift.position,
     {
       y: 0.12,
-      duration: 0.09,
+      duration: 0.22,
       ease: "power1.out",
     }
   );
@@ -111,10 +111,10 @@ export function playGiftDrop(
   tl.to(
     gift.rotation,
     {
-      y: finalYRotation - 0.02,
+      y: finalYRotation - 0.2,
       x: -0.01,
-      z: 0.05,
-      duration: 0.11,
+      z: 0.10,
+      duration: 0.22,
       ease: "sine.out",
     },
     "<"
@@ -124,7 +124,7 @@ export function playGiftDrop(
     gift.position,
     {
       y: 0,
-      duration: 0.11,
+      duration: 0.2,
       ease: "power1.in",
     }
   );
@@ -137,9 +137,9 @@ export function playGiftDrop(
     gift.rotation,
     {
       x: 0,
-      y: finalYRotation,
+      y: finalYRotation - 0.2,
       z: 0,
-      duration: 0.28,
+      duration: 0.2,
       ease: "power2.out",
     },
     "<"
