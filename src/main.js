@@ -6,6 +6,7 @@ import "./style.css";
 
 import {
   makeModelRetro,
+  createRetroComposer,
 } from "./retro-renderer.js";
 
 import {
@@ -200,16 +201,45 @@ playGiftDrop(
 // DEBUG
 // =====================================================
 
-// R = rejouer la chute
 
 window.addEventListener(
   "keydown",
   (event) => {
+
     if (event.code === "KeyR") {
       playGiftDrop(
-        gift.scene,
+        giftRoot
       );
     }
+
+
+    if (event.code === "KeyD") {
+      const uniform =
+        ditherPass.material.uniforms
+          .uDitherStrength;
+
+      uniform.value =
+        uniform.value > 0
+          ? 0
+          : 0.30;
+
+      console.log(
+        "Dithering:",
+        uniform.value > 0
+      );
+    }
+
+
+    if (event.code === "KeyQ") {
+      ditherPass.enabled =
+        !ditherPass.enabled;
+
+      console.log(
+        "PS1 color pass:",
+        ditherPass.enabled
+      );
+    }
+
   },
 );
 
@@ -223,10 +253,16 @@ function render() {
     render,
   );
 
-  renderer.render(
-    scene,
-    camera,
-  );
+  composer.render();
 }
+
+const {
+  composer,
+  ditherPass,
+} = createRetroComposer(
+  renderer,
+  scene,
+  camera,
+);
 
 render();
