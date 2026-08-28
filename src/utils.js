@@ -23,3 +23,24 @@ export function normalizeModel(model, targetHeight = 2.5) {
   // pose le modèle sur le sol
   model.position.y -= box.min.y;
 }
+
+export async function getGiftParts(giftModel) {
+
+    const box = giftModel.getObjectByName("Box");
+
+    const lid = giftModel.getObjectByName("Lid");
+
+    const ribbonBody = giftModel.getObjectByName("RibbonBody");
+
+    const bow = giftModel.getObjectByName("Bow");
+
+    const pullTail = giftModel.getObjectByName("PullTail");
+
+    return {
+      box,
+      lid,
+      ribbonBody,
+      bow,
+      pullTail
+    };
+}

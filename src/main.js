@@ -1,6 +1,6 @@
 import * as THREE from "three";
+import giftModelUrl from "./assets/models/gift-prepared.glb?url";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import giftModelUrl from "./assets/models/gift.glb?url";
 
 import "./style.css";
 
@@ -14,6 +14,7 @@ import {
 
 import {
   normalizeModel,
+  getGiftParts,
 } from "./utils.js";
 
 // =====================================================
@@ -135,89 +136,63 @@ const loader = new GLTFLoader();
 
 const gift = await loader.loadAsync(giftModelUrl);
 
-makeModelRetro(
-  gift.scene,
-);
+const giftModel = gift.scene;
+
+const giftParts = await getGiftParts(giftModel);
+
+for (const [name, object] of Object.entries(giftParts)) {
+  if (!object) {
+    throw new Error(
+      `Gift part "${name}" was not found in the GLB`
+    );
+  }
+}
+
+
+for (const [name, object] of Object.entries(giftParts)) {
+  if (!object) {
+    throw new Error(
+      `Gift part "${name}" was not found in the GLB`
+    );
+  }
+}
 
 normalizeModel(
-  gift.scene,
+  giftModel,
   2.5,
 );
 
-scene.add(
-  gift.scene,
+makeModelRetro(
+  giftModel
 );
 
-console.log(gift.scene);
+const giftRoot = new THREE.Group();
 
-gift.scene.traverse((object) => {
-  if (!object.isMesh) return;
+giftRoot.add(
+  giftModel,
+);
 
-  const geometry = object.geometry;
+scene.add(
+  giftRoot,
+);
+ 
+for (const object of Object.values(giftParts)) {
+  object.userData.initialPosition =
+    object.position.clone();
 
-  const vertices =
-    geometry.attributes.position?.count ?? 0;
+  object.userData.initialRotation =
+    object.rotation.clone();
 
-  const triangles = geometry.index
-    ? geometry.index.count / 3
-    : vertices / 3;
-
-  const materials = Array.isArray(object.material)
-    ? object.material
-    : [object.material];
-
-  console.log({
-    name: object.name,
-    type: object.type,
-    vertices,
-    triangles,
-    materialCount: materials.length,
-    materials: materials.map((material) => ({
-      name: material.name,
-      type: material.type,
-      hasTexture: Boolean(material.map),
-      color: material.color?.getHexString(),
-    })),
-  });
-});
-
-function printHierarchy(object, depth = 0) {
-  const indent = "  ".repeat(depth);
-
-  console.log(
-    `${indent}${object.name || "(sans nom)"} [${object.type}]`
-  );
-
-  object.children.forEach((child) => {
-    printHierarchy(child, depth + 1);
-  });
+  object.userData.initialScale =
+    object.scale.clone();
 }
-
-printHierarchy(gift.scene);
-
-gift.scene.traverse((object) => {
-  if (!object.isMesh) return;
-
-  const material = object.material;
-  const texture = material.map;
-
-  if (!texture) return;
-
-  console.log({
-    width: texture.image?.width,
-    height: texture.image?.height,
-    colorSpace: texture.colorSpace,
-    magFilter: texture.magFilter,
-    minFilter: texture.minFilter,
-  });
-});
 
 // =====================================================
 // ANIMATION INTRO
 // =====================================================
 
 playGiftDrop(
-  gift.scene,
+  giftRoot,
 );
 
 

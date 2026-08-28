@@ -55,22 +55,66 @@ export function makeModelRetro(model) {
   model.traverse((object) => {
     if (!object.isMesh) return;
 
-    const materials = Array.isArray(object.material)
-      ? object.material
-      : [object.material];
+    const oldMaterials =
+      Array.isArray(object.material)
+        ? object.material
+        : [object.material];
 
-    for (const material of materials) {
-      if (!material) continue;
+    const retroMaterials =
+      oldMaterials.map((oldMaterial) => {
+        const material =
+          convertToRetroMaterial(
+            oldMaterial
+          );
 
-      material.flatShading = true;
+        makeTextureRetro(
+          material.map
+        );
 
-      makeTextureRetro(material.map);
-      makeTextureRetro(material.normalMap);
-      makeTextureRetro(material.roughnessMap);
+        addVertexJitter(
+          material,
+          1
+        );
 
-      addVertexJitter(material, 1);
+        material.needsUpdate = true;
 
-      material.needsUpdate = true;
-    }
+        return material;
+      });
+
+    object.material =
+      Array.isArray(object.material)
+        ? retroMaterials
+        : retroMaterials[0];
   });
+}
+
+function convertToRetroMaterial(oldMaterial) {
+  const material =
+    new THREE.MeshLambertMaterial({
+      color:
+        oldMaterial.color?.clone()
+        ?? new THREE.Color(0xffffff),
+
+      map:
+        oldMaterial.map ?? null,
+
+      transparent:
+        oldMaterial.transparent,
+
+      opacity:
+        oldMaterial.opacity,
+
+      alphaTest:
+        oldMaterial.alphaTest,
+
+      side:
+        oldMaterial.side,
+    });
+
+  material.name =
+    oldMaterial.name;
+
+  material.flatShading = true;
+
+  return material;
 }
