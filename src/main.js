@@ -18,6 +18,10 @@ import {
   getGiftParts,
 } from "./utils.js";
 
+import {
+  createRibbonInteraction,
+} from "./interactions.js";
+
 // =====================================================
 // SCÈNE
 // =====================================================
@@ -180,14 +184,56 @@ for (const object of Object.values(giftParts)) {
     object.scale.clone();
 }
 
+const ribbonInteraction =
+  createRibbonInteraction({
+    camera,
+
+    canvas:
+      renderer.domElement,
+
+    pullTail:
+      giftParts.pullTail,
+
+    bow:
+      giftParts.bow,
+
+    maxPullDistance:
+      0.8,
+
+    onProgress(progress) {
+      console.log(
+        "Ribbon:",
+        progress.toFixed(2)
+      );
+    },
+
+    onComplete() {
+      console.log(
+        "Ruban entièrement tiré !"
+      );
+    },
+  });
+
 // =====================================================
 // ANIMATION INTRO
 // =====================================================
 
-playGiftDrop(
-  giftRoot,
-);
+const introTimeline =
+  playGiftDrop(
+    giftRoot
+  );
 
+
+introTimeline.eventCallback(
+  "onComplete",
+  () => {
+    ribbonInteraction.enable();
+
+    console.log(
+      "Ribbon interaction enabled"
+    );
+  }
+);
 
 // =====================================================
 // DEBUG
