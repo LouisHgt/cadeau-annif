@@ -150,14 +150,6 @@ for (const [name, object] of Object.entries(giftParts)) {
 }
 
 
-for (const [name, object] of Object.entries(giftParts)) {
-  if (!object) {
-    throw new Error(
-      `Gift part "${name}" was not found in the GLB`
-    );
-  }
-}
-
 normalizeModel(
   giftModel,
   2.5,
