@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import giftModelUrl from "./assets/models/gift.glb?url";
 
 import "./style.css";
 
@@ -7,13 +9,12 @@ import {
 } from "./retro-renderer.js";
 
 import {
-  createGiftPlaceholder,
-} from "./gift-placeholder.js";
-
-import {
   playGiftDrop,
 } from "./animations.js";
 
+import {
+  normalizeModel,
+} from "./utils.js";
 
 // =====================================================
 // SCÈNE
@@ -127,27 +128,96 @@ scene.add(floor);
 
 
 // =====================================================
-// CADEAU PLACEHOLDER
+// CADEAU
 // =====================================================
 
-const gift =
-  createGiftPlaceholder();
+const loader = new GLTFLoader();
+
+const gift = await loader.loadAsync(giftModelUrl);
 
 makeModelRetro(
-  gift.root,
+  gift.scene,
+);
+
+normalizeModel(
+  gift.scene,
+  2.5,
 );
 
 scene.add(
-  gift.root,
+  gift.scene,
 );
 
+console.log(gift.scene);
+
+gift.scene.traverse((object) => {
+  if (!object.isMesh) return;
+
+  const geometry = object.geometry;
+
+  const vertices =
+    geometry.attributes.position?.count ?? 0;
+
+  const triangles = geometry.index
+    ? geometry.index.count / 3
+    : vertices / 3;
+
+  const materials = Array.isArray(object.material)
+    ? object.material
+    : [object.material];
+
+  console.log({
+    name: object.name,
+    type: object.type,
+    vertices,
+    triangles,
+    materialCount: materials.length,
+    materials: materials.map((material) => ({
+      name: material.name,
+      type: material.type,
+      hasTexture: Boolean(material.map),
+      color: material.color?.getHexString(),
+    })),
+  });
+});
+
+function printHierarchy(object, depth = 0) {
+  const indent = "  ".repeat(depth);
+
+  console.log(
+    `${indent}${object.name || "(sans nom)"} [${object.type}]`
+  );
+
+  object.children.forEach((child) => {
+    printHierarchy(child, depth + 1);
+  });
+}
+
+printHierarchy(gift.scene);
+
+gift.scene.traverse((object) => {
+  if (!object.isMesh) return;
+
+  const material = object.material;
+  const texture = material.map;
+
+  if (!texture) return;
+
+  console.log({
+    width: texture.image?.width,
+    height: texture.image?.height,
+    colorSpace: texture.colorSpace,
+    magFilter: texture.magFilter,
+    minFilter: texture.minFilter,
+  });
+});
 
 // =====================================================
 // ANIMATION INTRO
 // =====================================================
 
 playGiftDrop(
-  gift.root,
+  gift.scene,
 );
 
 
@@ -162,7 +232,7 @@ window.addEventListener(
   (event) => {
     if (event.code === "KeyR") {
       playGiftDrop(
-        gift.root,
+        gift.scene,
       );
     }
   },
