@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
 
+// Direction du tirage.
+// Horizontal positif = droite, vertical positif = haut.
+// Vers la caméra positif = vers l'utilisateur.
+const PULL_HORIZONTAL = -0.15;
+const PULL_VERTICAL = -0.4;
+const PULL_TOWARD_CAMERA = 0.7;
+
 
 export function createRibbonInteraction({
   camera,
@@ -8,7 +15,7 @@ export function createRibbonInteraction({
   pullTail,
   bow,
 
-  maxPullDistance = 1.2,
+  maxPullDistance = 0.8,
 
   onProgress = null,
   onComplete = null,
@@ -34,6 +41,9 @@ export function createRibbonInteraction({
 
   // Direction du tirage.
   const pullDirection =
+    new THREE.Vector3();
+
+  const dragDirection =
     new THREE.Vector3();
 
   const cameraDirection =
@@ -96,40 +106,54 @@ export function createRibbonInteraction({
 
 
   // ==============================================
-  // DIRECTION NATURELLE DU RUBAN
+  // DIRECTION FIXE DU RUBAN
   // ==============================================
 
   function calculatePullDirection() {
-    const bowCenter =
-      getCenter(bow);
+    const cameraRight =
+      new THREE.Vector3()
+        .setFromMatrixColumn(
+          camera.matrixWorld,
+          0,
+        )
+        .normalize();
 
-    const tailCenter =
-      getCenter(pullTail);
-
-
-    pullDirection
-      .subVectors(
-        tailCenter,
-        bowCenter,
-      );
-
-
-    // Le drag se fait sur un plan face caméra.
-    // On enlève donc la composante qui partirait
-    // vers ou depuis la caméra.
+    const cameraUp =
+      new THREE.Vector3()
+        .setFromMatrixColumn(
+          camera.matrixWorld,
+          1,
+        )
+        .normalize();
 
     camera.getWorldDirection(
       cameraDirection
     );
 
-    pullDirection.addScaledVector(
-      cameraDirection,
-      -pullDirection.dot(
-        cameraDirection
+    pullDirection
+      .copy(cameraRight)
+      .multiplyScalar(PULL_HORIZONTAL)
+      .addScaledVector(
+        cameraUp,
+        PULL_VERTICAL,
       )
-    );
+      .addScaledVector(
+        cameraDirection,
+        -PULL_TOWARD_CAMERA,
+      );
 
     pullDirection.normalize();
+
+    // La souris ne contrôle que la partie visible à l'écran.
+    dragDirection
+      .copy(pullDirection)
+      .addScaledVector(
+        cameraDirection,
+        -pullDirection.dot(
+          cameraDirection
+        ),
+      )
+      .normalize();
   }
 
 
@@ -288,7 +312,7 @@ export function createRibbonInteraction({
     const distance =
       THREE.MathUtils.clamp(
         movement.dot(
-          pullDirection
+          dragDirection
         ),
 
         0,

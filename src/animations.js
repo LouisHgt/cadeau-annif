@@ -1,61 +1,149 @@
 import { gsap } from "gsap";
 
-export function playGiftDrop(gift) {
-  gift.position.set(0, 6, 0);
+export function playGiftDrop(
+  gift,
+  {
+    finalYRotation = -Math.PI * 0.22,
+  } = {}
+) {
+  gsap.killTweensOf(gift.position);
+  gsap.killTweensOf(gift.rotation);
 
+  // Position / orientation de départ
+  gift.position.set(0, 7, 0);
+
+  // On arrive déjà légèrement incliné,
+  // avec une rotation plus importante que l'angle final,
+  // pour donner une vraie impression de mouvement.
   gift.rotation.set(
-    -0.15,
-    0.2,
-    0.1,
+    0.16,
+    finalYRotation - Math.PI * 1.35,
+    0.32,
   );
 
-  const timeline = gsap.timeline();
+  const tl = gsap.timeline();
 
-  timeline
-    .to(gift.position, {
+  // ---------------------------------------
+  // Chute principale + rotation
+  // ---------------------------------------
+
+  tl.to(
+    gift.position,
+    {
       y: 0,
-      duration: 0.72,
-      ease: "power3.in",
-    })
+      duration: 0.82,
+      ease: "power4.in",
+    },
+    0
+  );
 
-    // premier rebond
-    .to(gift.position, {
-      y: 0.32,
-      duration: 0.12,
-      ease: "power2.out",
-    })
-
-    .to(gift.position, {
-      y: 0,
-      duration: 0.14,
+  tl.to(
+    gift.rotation,
+    {
+      y: finalYRotation + 0.15,
+      x: 0.08,
+      z: -0.24,
+      duration: 0.82,
       ease: "power2.in",
-    })
+    },
+    0
+  );
 
-    // deuxième petit rebond
-    .to(gift.position, {
-      y: 0.11,
-      duration: 0.08,
-      ease: "power1.out",
-    })
+  // ---------------------------------------
+  // Premier rebond
+  // ---------------------------------------
 
-    .to(gift.position, {
+  tl.to(
+    gift.position,
+    {
+      y: 0.34,
+      duration: 0.14,
+      ease: "power2.out",
+    }
+  );
+
+  tl.to(
+    gift.rotation,
+    {
+      y: finalYRotation - 0.08,
+      x: -0.03,
+      z: 0.18,
+      duration: 0.16,
+      ease: "sine.out",
+    },
+    "<"
+  );
+
+  tl.to(
+    gift.position,
+    {
       y: 0,
-      duration: 0.1,
+      duration: 0.15,
+      ease: "power2.in",
+    }
+  );
+
+  tl.to(
+    gift.rotation,
+    {
+      y: finalYRotation + 0.05,
+      x: 0.03,
+      z: -0.10,
+      duration: 0.18,
+      ease: "sine.inOut",
+    },
+    "<"
+  );
+
+  // ---------------------------------------
+  // Deuxième petit rebond
+  // ---------------------------------------
+
+  tl.to(
+    gift.position,
+    {
+      y: 0.12,
+      duration: 0.09,
+      ease: "power1.out",
+    }
+  );
+
+  tl.to(
+    gift.rotation,
+    {
+      y: finalYRotation - 0.02,
+      x: -0.01,
+      z: 0.05,
+      duration: 0.11,
+      ease: "sine.out",
+    },
+    "<"
+  );
+
+  tl.to(
+    gift.position,
+    {
+      y: 0,
+      duration: 0.11,
       ease: "power1.in",
-    })
+    }
+  );
 
-    // remise droite
-    .to(
-      gift.rotation,
-      {
-        x: 0,
-        y: 0,
-        z: 0,
-        duration: 0.3,
-        ease: "power2.out",
-      },
-      "-=0.2",
-    );
+  // ---------------------------------------
+  // Stabilisation finale
+  // ---------------------------------------
 
-  return timeline;
+  tl.to(
+    gift.rotation,
+    {
+      x: 0,
+      y: finalYRotation,
+      z: 0,
+      duration: 0.28,
+      ease: "power2.out",
+    },
+    "<"
+  );
+
+  return tl;
 }

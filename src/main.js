@@ -22,6 +22,9 @@ import {
   createRibbonInteraction,
 } from "./interactions.js";
 
+const SHOWCASE_Y_ROTATION =
+  Math.PI * 0.28;
+
 // =====================================================
 // SCÈNE
 // =====================================================
@@ -39,16 +42,16 @@ scene.background = new THREE.Color(
 
 const camera =
   new THREE.PerspectiveCamera(
-    42,
+    40,
     4 / 3,
     0.1,
     100,
   );
 
 camera.position.set(
-  3.2,
-  2.6,
-  6,
+  3.3,
+  4.8,
+  5.2,
 );
 
 camera.lookAt(
@@ -198,7 +201,7 @@ const ribbonInteraction =
       giftParts.bow,
 
     maxPullDistance:
-      0.8,
+      1.2,
 
     onProgress(progress) {
       console.log(
@@ -220,7 +223,11 @@ const ribbonInteraction =
 
 const introTimeline =
   playGiftDrop(
-    giftRoot
+    giftRoot,
+    {
+      finalYRotation:
+        SHOWCASE_Y_ROTATION,
+    }
   );
 
 
