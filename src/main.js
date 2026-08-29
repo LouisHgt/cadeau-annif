@@ -14,6 +14,7 @@ import {
   playGiftDrop,
   playLidFall,
   playBoxOpen,
+  playCakeReveal,
 } from "./animations.js";
 
 import {
@@ -305,29 +306,61 @@ giftRoot.add(
 );
 
 
-// Centre de la boîte dans l'espace du giftRoot
+// -----------------------------------------------------
+// Centre du fond de la boîte
+// -----------------------------------------------------
+
 const boxCenterLocal =
   giftRoot.worldToLocal(
     boxCenterWorld.clone()
   );
 
 
-// Centre horizontalement le gâteau
+// Position du dessus du fond de la boîte
+const boxTopWorld =
+  new THREE.Vector3(
+    boxCenterWorld.x,
+    boxBounds.max.y,
+    boxCenterWorld.z,
+  );
+
+const boxTopLocal =
+  giftRoot.worldToLocal(
+    boxTopWorld
+  );
+
+
+// -----------------------------------------------------
+// Recentrage du modèle du gâteau
+// -----------------------------------------------------
+
 cakeModel.position.x -=
   scaledCakeCenter.x;
 
 cakeModel.position.z -=
   scaledCakeCenter.z;
 
+/*
+  On place le point le plus bas du gâteau
+  exactement sur y = 0 de cakeRoot.
+*/
+cakeModel.position.y -=
+  scaledCakeBounds.min.y;
 
-// Pour l'instant on le place en position FINALE
-// volontairement visible au-dessus de la boîte.
+
+// -----------------------------------------------------
+// Position finale du gâteau
+// -----------------------------------------------------
 
 cakeRoot.position.set(
   boxCenterLocal.x,
-  boxBounds.max.y + 0.25,
+
+  boxTopLocal.y + 0.025,
+
   boxCenterLocal.z,
 );
+
+
  
 
 const ribbonInteraction =
@@ -381,34 +414,45 @@ const ribbonInteraction =
       lidTimeline.eventCallback(
         "onComplete",
         () => {
-          playBoxOpen({
-            box:
-              giftParts.box,
+          const boxTimeline =
+            playBoxOpen({
+              box:
+                giftParts.box,
 
-            boxFront:
-              giftParts.boxFront,
+              boxFront:
+                giftParts.boxFront,
 
-            boxBack:
-              giftParts.boxBack,
+              boxBack:
+                giftParts.boxBack,
 
-            boxLeft:
-              giftParts.boxLeft,
+              boxLeft:
+                giftParts.boxLeft,
 
-            boxRight:
-              giftParts.boxRight,
+              boxRight:
+                giftParts.boxRight,
 
-            ribbonFront:
-              giftParts.ribbonFront,
+              ribbonFront:
+                giftParts.ribbonFront,
 
-            ribbonBack:
-              giftParts.ribbonBack,
+              ribbonBack:
+                giftParts.ribbonBack,
 
-            ribbonLeft:
-              giftParts.ribbonLeft,
+              ribbonLeft:
+                giftParts.ribbonLeft,
 
-            ribbonRight:
-              giftParts.ribbonRight,
-          });
+              ribbonRight:
+                giftParts.ribbonRight,
+            });
+
+
+          boxTimeline.eventCallback(
+            "onComplete",
+            () => {
+              playCakeReveal(
+                cakeRoot
+              );
+            }
+          );
         }
       );
     },

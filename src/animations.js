@@ -796,3 +796,56 @@ export function playBoxOpen({
 
   return tl;
 }
+
+export function playCakeReveal(
+  cakeRoot
+) {
+  gsap.killTweensOf(
+    cakeRoot.position
+  );
+
+  const startY =
+    cakeRoot.position.y;
+
+  const tl =
+    gsap.timeline({
+      delay: 0.12,
+    });
+
+
+  // -----------------------------
+  // Petit saut
+  // -----------------------------
+
+  tl.to(
+    cakeRoot.position,
+    {
+      y:
+        startY + 0.22,
+
+      duration: 0.22,
+
+      ease: "power2.out",
+    }
+  );
+
+
+  // -----------------------------
+  // Retombe à sa place
+  // -----------------------------
+
+  tl.to(
+    cakeRoot.position,
+    {
+      y:
+        startY,
+
+      duration: 0.28,
+
+      ease: "bounce.out",
+    }
+  );
+
+
+  return tl;
+}
