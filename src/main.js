@@ -11,6 +11,7 @@ import {
 
 import {
   playGiftDrop,
+  playLidFall,
 } from "./animations.js";
 
 import {
@@ -214,6 +215,15 @@ const ribbonInteraction =
       console.log(
         "Ruban entièrement tiré !"
       );
+
+      playLidFall({
+        lid: giftParts.lid,
+        bow: giftParts.bow,
+        pullTail: giftParts.pullTail,
+        ribbonLid: giftParts.ribbonLid ?? null,
+        scene,
+        camera,
+      });
     },
   });
 

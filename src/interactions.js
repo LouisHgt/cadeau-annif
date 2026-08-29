@@ -20,6 +20,7 @@ export function createRibbonInteraction({
   onProgress = null,
   onComplete = null,
 }) {
+  
   const raycaster =
     new THREE.Raycaster();
 
@@ -55,6 +56,10 @@ export function createRibbonInteraction({
   let completed = false;
 
   let pullProgress = 0;
+
+  const COMPLETE_THRESHOLD = 0.98;
+
+  let readyToComplete = false;
 
 
   // ==============================================
@@ -337,11 +342,21 @@ export function createRibbonInteraction({
     }
 
 
-    if (
-      pullProgress >= 0.98
-      && !completed
-    ) {
-      complete();
+    readyToComplete =
+      pullProgress >= COMPLETE_THRESHOLD;
+
+    if (readyToComplete) {
+      pullProgress = 1;
+    }
+
+    updateVisuals(
+      pullProgress
+    );
+
+    if (onProgress) {
+      onProgress(
+        pullProgress
+      );
     }
   }
 
@@ -468,9 +483,15 @@ export function createRibbonInteraction({
     }
 
 
-    // Si on n'a pas suffisamment tiré :
-    // retour en place.
+    if (
+      readyToComplete
+      && !completed
+    ) {
+      complete();
+      return;
+    }
 
+    // Sinon retour en place
     if (!completed) {
       reset();
     }
@@ -540,6 +561,8 @@ export function createRibbonInteraction({
     if (onProgress) {
       onProgress(0);
     }
+
+    readyToComplete = false;
   }
 
 
@@ -552,6 +575,8 @@ export function createRibbonInteraction({
     dragging = false;
 
     pullProgress = 1;
+
+    readyToComplete = false;
 
     canvas.style.cursor =
       "default";

@@ -25,22 +25,35 @@ export function normalizeModel(model, targetHeight = 2.5) {
 }
 
 export async function getGiftParts(giftModel) {
+  const box =
+    giftModel.getObjectByName("Box");
 
-    const box = giftModel.getObjectByName("Box");
+  const lid =
+    giftModel.getObjectByName("Lid");
 
-    const lid = giftModel.getObjectByName("Lid");
+  const ribbonBody =
+    giftModel.getObjectByName("RibbonBody");
 
-    const ribbonBody = giftModel.getObjectByName("RibbonBody");
+  const ribbonBox =
+    giftModel.getObjectByName("RibbonBox")
+    ?? ribbonBody;
 
-    const bow = giftModel.getObjectByName("Bow");
+  const ribbonLid =
+    giftModel.getObjectByName("RibbonLid");
 
-    const pullTail = giftModel.getObjectByName("PullTail");
+  const bow =
+    giftModel.getObjectByName("Bow");
 
-    return {
-      box,
-      lid,
-      ribbonBody,
-      bow,
-      pullTail
-    };
+  const pullTail =
+    giftModel.getObjectByName("PullTail");
+
+  return {
+    box,
+    lid,
+    ribbonBody,
+    ribbonBox,
+    ribbonLid,
+    bow,
+    pullTail,
+  };
 }
