@@ -151,26 +151,28 @@ export function playGiftDrop(
 
 export function playLidFall({
   lid,
+  ribbonLid,
   bow,
-  pullTail = null,
-  ribbonLid = null,
+  pullTail,
   scene,
   camera,
 }) {
-  const carriedObjects = [
-    lid,
-    bow,
-    pullTail,
-    ribbonLid,
-  ].filter(Boolean);
+  // ==================================================
+  // GROUPE COUVERCLE
+  // Lid + RibbonLid + Bow restent solidaires
+  // ==================================================
 
-  // Centre du couvercle pour créer le pivot commun
   const lidBox =
     new THREE.Box3()
       .setFromObject(lid);
 
   const lidCenter =
     lidBox.getCenter(
+      new THREE.Vector3()
+    );
+
+  const lidSize =
+    lidBox.getSize(
       new THREE.Vector3()
     );
 
@@ -181,13 +183,32 @@ export function playLidFall({
     lidCenter
   );
 
-  scene.add(lidRig);
+  scene.add(
+    lidRig
+  );
 
-  for (const object of carriedObjects) {
-    lidRig.attach(object);
-  }
+  // attach() conserve la position monde actuelle.
+  lidRig.attach(lid);
+  lidRig.attach(ribbonLid);
+  lidRig.attach(bow);
 
-  // Direction arrière + droite par rapport à la caméra
+
+  // ==================================================
+  // LANGUETTE
+  // Elle ne suit PAS le couvercle.
+  // Elle tombe depuis la position où l'utilisateur
+  // vient de la tirer.
+  // ==================================================
+
+  scene.attach(
+    pullTail
+  );
+
+
+  // ==================================================
+  // DIRECTIONS PAR RAPPORT À LA CAMÉRA
+  // ==================================================
+
   const cameraForward =
     new THREE.Vector3();
 
@@ -197,6 +218,7 @@ export function playLidFall({
 
   cameraForward.y = 0;
   cameraForward.normalize();
+
 
   const cameraRight =
     new THREE.Vector3()
@@ -208,131 +230,278 @@ export function playLidFall({
   cameraRight.y = 0;
   cameraRight.normalize();
 
+
+  // ==================================================
+  // TRAJECTOIRE DU COUVERCLE
+  // ==================================================
+
   const startPosition =
     lidRig.position.clone();
 
+
+  // Petit saut initial
   const apexPosition =
     startPosition
       .clone()
       .addScaledVector(
         cameraForward,
-        0.55
+        0.45
       )
       .addScaledVector(
         cameraRight,
-        0.50
+        0.45
       );
 
-  apexPosition.y += 0.55;
+  apexPosition.y += 0.60;
 
+
+  // Position finale :
+  // derrière + à droite de la boîte.
   const finalPosition =
     startPosition
       .clone()
       .addScaledVector(
         cameraForward,
-        1.8
+        1.75
       )
       .addScaledVector(
         cameraRight,
-        1.35
+        1.30
       );
 
-  finalPosition.y = 0.14;
+  // Comme le pivot est au centre du couvercle,
+  // on utilise environ la moitié de son épaisseur
+  // pour qu'il repose sur le sol.
+  const lidGroundY =
+    Math.max(
+      0.06,
+      lidSize.y * 0.5 + 0.02
+    );
 
-  const tl = gsap.timeline();
+  finalPosition.y =
+    lidGroundY;
 
-  // Petit saut au départ
+
+  // ==================================================
+  // TRAJECTOIRE DE LA LANGUETTE
+  // ==================================================
+
+  const tailBox =
+    new THREE.Box3()
+      .setFromObject(pullTail);
+
+  /*
+    Distance entre l'origine de l'objet
+    et son point le plus bas.
+
+    Ça permet de le poser sur le sol
+    sans valeur Y arbitraire.
+  */
+  const tailBottomOffset =
+    pullTail.position.y
+    - tailBox.min.y;
+
+
+  const tailFinalPosition =
+    pullTail.position
+      .clone()
+      // Elle continue légèrement dans le sens
+      // où elle venait d'être tirée.
+      .addScaledVector(
+        cameraForward,
+        -0.30
+      )
+      .addScaledVector(
+        cameraRight,
+        -0.12
+      );
+
+  tailFinalPosition.y =
+    Math.max(
+      0.02,
+      tailBottomOffset + 0.01
+    );
+
+
+  // ==================================================
+  // TIMELINE
+  // ==================================================
+
+  const tl =
+    gsap.timeline();
+
+
+  // --------------------------------------------------
+  // 1 — La languette échappe de la main
+  // --------------------------------------------------
+
+  tl.to(
+    pullTail.position,
+    {
+      x: tailFinalPosition.x,
+      y: tailFinalPosition.y,
+      z: tailFinalPosition.z,
+
+      duration: 0.55,
+      ease: "power2.in",
+    },
+    0
+  );
+
+
+  tl.to(
+    pullTail.rotation,
+    {
+      x: `+=${Math.PI * 0.65}`,
+      y: `+=${Math.PI * 0.30}`,
+      z: `-=${Math.PI * 0.55}`,
+
+      duration: 0.58,
+      ease: "none",
+    },
+    0
+  );
+
+
+  // --------------------------------------------------
+  // 2 — Le couvercle décolle
+  // --------------------------------------------------
+
   tl.to(
     lidRig.position,
     {
       x: apexPosition.x,
       y: apexPosition.y,
       z: apexPosition.z,
-      duration: 0.26,
+
+      duration: 0.27,
       ease: "power2.out",
     },
-    0
+    0.08
   );
+
 
   tl.to(
     lidRig.rotation,
     {
-      x: -0.35,
-      y: 0.30,
-      z: 0.22,
-      duration: 0.26,
+      x: -0.32,
+      y: 0.25,
+      z: 0.20,
+
+      duration: 0.27,
       ease: "power2.out",
     },
-    0
+    0.08
   );
 
-  // Chute derrière à droite
+
+  // --------------------------------------------------
+  // 3 — Il part derrière à droite
+  // --------------------------------------------------
+
   tl.to(
     lidRig.position,
     {
       x: finalPosition.x,
       y: finalPosition.y,
       z: finalPosition.z,
+
       duration: 0.72,
       ease: "power2.in",
     },
-    0.24
+    0.32
   );
 
+
+  // Rotation pendant le vol
   tl.to(
     lidRig.rotation,
     {
-      x: Math.PI * 2 + 0.08,
-      y: Math.PI * 0.45,
-      z: -Math.PI * 2 - 0.05,
-      duration: 0.82,
+      x:
+        Math.PI * 2 + 0.08,
+
+      y:
+        Math.PI * 0.45,
+
+      z:
+        -Math.PI * 2 - 0.05,
+
+      duration: 0.78,
       ease: "none",
     },
-    0.18
+    0.25
   );
 
-  // Rebond
+
+  // --------------------------------------------------
+  // 4 — Impact du couvercle
+  // --------------------------------------------------
+
   tl.to(
     lidRig.position,
     {
-      y: 0.25,
+      y:
+        lidGroundY + 0.12,
+
       duration: 0.10,
       ease: "power2.out",
     }
   );
 
+
   tl.to(
     lidRig.rotation,
     {
-      x: Math.PI * 2 - 0.04,
-      y: Math.PI * 0.47,
-      z: -Math.PI * 2 + 0.04,
+      x:
+        Math.PI * 2 - 0.04,
+
+      y:
+        Math.PI * 0.47,
+
+      z:
+        -Math.PI * 2 + 0.04,
+
       duration: 0.10,
       ease: "sine.out",
     },
     "<"
   );
 
+
+  // --------------------------------------------------
+  // 5 — Petit rebond final
+  // --------------------------------------------------
+
   tl.to(
     lidRig.position,
     {
-      y: 0.14,
+      y:
+        lidGroundY,
+
       duration: 0.14,
       ease: "power2.in",
     }
   );
 
+
   tl.to(
     lidRig.rotation,
     {
-      x: Math.PI * 2 + 0.02,
-      y: Math.PI * 0.48,
-      z: -Math.PI * 2 + 0.01,
+      x:
+        Math.PI * 2 + 0.02,
+
+      y:
+        Math.PI * 0.48,
+
+      z:
+        -Math.PI * 2 + 0.01,
+
       duration: 0.14,
       ease: "power2.out",
     },
     "<"
   );
+
 
   return tl;
 }

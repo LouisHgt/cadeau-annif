@@ -218,9 +218,9 @@ const ribbonInteraction =
 
       playLidFall({
         lid: giftParts.lid,
+        ribbonLid: giftParts.ribbonLid,
         bow: giftParts.bow,
         pullTail: giftParts.pullTail,
-        ribbonLid: giftParts.ribbonLid ?? null,
         scene,
         camera,
       });

@@ -348,16 +348,6 @@ export function createRibbonInteraction({
     if (readyToComplete) {
       pullProgress = 1;
     }
-
-    updateVisuals(
-      pullProgress
-    );
-
-    if (onProgress) {
-      onProgress(
-        pullProgress
-      );
-    }
   }
 
 

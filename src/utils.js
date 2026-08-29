@@ -34,10 +34,6 @@ export async function getGiftParts(giftModel) {
   const ribbonBody =
     giftModel.getObjectByName("RibbonBody");
 
-  const ribbonBox =
-    giftModel.getObjectByName("RibbonBox")
-    ?? ribbonBody;
-
   const ribbonLid =
     giftModel.getObjectByName("RibbonLid");
 
@@ -51,7 +47,6 @@ export async function getGiftParts(giftModel) {
     box,
     lid,
     ribbonBody,
-    ribbonBox,
     ribbonLid,
     bow,
     pullTail,
