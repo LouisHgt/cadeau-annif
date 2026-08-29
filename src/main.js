@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import giftModelUrl from "./assets/models/gift-prepared.glb?url";
+import cakeModelUrl from "./assets/models/cake.glb?url";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import "./style.css";
@@ -167,6 +168,22 @@ makeModelRetro(
   giftModel
 );
 
+giftModel.traverse((object) => {
+  if (!object.isMesh) return;
+
+  const materials =
+    Array.isArray(object.material)
+      ? object.material
+      : [object.material];
+
+  for (const material of materials) {
+    material.side =
+      THREE.DoubleSide;
+
+    material.needsUpdate = true;
+  }
+});
+
 const giftRoot = new THREE.Group();
 
 giftRoot.add(
@@ -176,17 +193,141 @@ giftRoot.add(
 scene.add(
   giftRoot,
 );
+
+// =====================================================
+// GÂTEAU
+// =====================================================
+
+const cake =
+  await loader.loadAsync(
+    cakeModelUrl
+  );
+
+const cakeModel =
+  cake.scene;
+
+makeModelRetro(
+  cakeModel
+);
+
+
+// -----------------------------------------------------
+// Dimensions de la boîte
+// -----------------------------------------------------
+
+giftRoot.updateMatrixWorld(true);
+
+const boxBounds =
+  new THREE.Box3()
+    .setFromObject(
+      giftParts.box
+    );
+
+const boxSize =
+  boxBounds.getSize(
+    new THREE.Vector3()
+  );
+
+const boxCenterWorld =
+  boxBounds.getCenter(
+    new THREE.Vector3()
+  );
+
+
+// -----------------------------------------------------
+// Dimensions originales du gâteau
+// -----------------------------------------------------
+
+const cakeBounds =
+  new THREE.Box3()
+    .setFromObject(
+      cakeModel
+    );
+
+const cakeSize =
+  cakeBounds.getSize(
+    new THREE.Vector3()
+  );
+
+
+// -----------------------------------------------------
+// Taille du gâteau
+//
+// On lui donne environ 65 % de la largeur
+// disponible dans la boîte.
+// -----------------------------------------------------
+
+const targetCakeWidth =
+  Math.min(
+    boxSize.x,
+    boxSize.z
+  ) * 0.65;
+
+const cakeScale =
+  targetCakeWidth /
+  Math.max(
+    cakeSize.x,
+    cakeSize.z
+  );
+
+cakeModel.scale.setScalar(
+  cakeScale
+);
+
+
+// Recalcul après scale
+const scaledCakeBounds =
+  new THREE.Box3()
+    .setFromObject(
+      cakeModel
+    );
+
+const scaledCakeCenter =
+  scaledCakeBounds.getCenter(
+    new THREE.Vector3()
+  );
+
+
+// -----------------------------------------------------
+// Root du gâteau
+// -----------------------------------------------------
+
+const cakeRoot =
+  new THREE.Group();
+
+cakeRoot.add(
+  cakeModel
+);
+
+giftRoot.add(
+  cakeRoot
+);
+
+
+// Centre de la boîte dans l'espace du giftRoot
+const boxCenterLocal =
+  giftRoot.worldToLocal(
+    boxCenterWorld.clone()
+  );
+
+
+// Centre horizontalement le gâteau
+cakeModel.position.x -=
+  scaledCakeCenter.x;
+
+cakeModel.position.z -=
+  scaledCakeCenter.z;
+
+
+// Pour l'instant on le place en position FINALE
+// volontairement visible au-dessus de la boîte.
+
+cakeRoot.position.set(
+  boxCenterLocal.x,
+  boxBounds.max.y + 0.25,
+  boxCenterLocal.z,
+);
  
-for (const object of Object.values(giftParts)) {
-  object.userData.initialPosition =
-    object.position.clone();
-
-  object.userData.initialRotation =
-    object.rotation.clone();
-
-  object.userData.initialScale =
-    object.scale.clone();
-}
 
 const ribbonInteraction =
   createRibbonInteraction({
