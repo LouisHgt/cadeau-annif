@@ -505,3 +505,294 @@ export function playLidFall({
 
   return tl;
 }
+
+export function playBoxOpen({
+  box,
+
+  boxFront,
+  boxBack,
+  boxLeft,
+  boxRight,
+
+  ribbonFront,
+  ribbonBack,
+  ribbonLeft,
+  ribbonRight,
+}) {
+  // ==================================================
+  // CENTRE DE LA BOÎTE
+  // ==================================================
+
+  const boxCenterWorld =
+    new THREE.Box3()
+      .setFromObject(box)
+      .getCenter(
+        new THREE.Vector3()
+      );
+
+
+  // ==================================================
+  // TIMELINE
+  // ==================================================
+
+  const tl =
+    gsap.timeline({
+      // Petite respiration après
+      // la chute du couvercle.
+      delay: 0.18,
+    });
+
+
+  // ==================================================
+  // DÉTERMINE COMMENT UN MUR DOIT TOMBER
+  // ==================================================
+
+  function getOpeningDirection(wall) {
+    /*
+      Le pivot du mur est déjà situé
+      au milieu de son arête inférieure.
+
+      On cherche seulement de quel côté
+      du centre de la boîte il se trouve.
+    */
+
+    const parent =
+      wall.parent;
+
+    const centerLocal =
+      parent.worldToLocal(
+        boxCenterWorld.clone()
+      );
+
+    const offset =
+      wall.position
+        .clone()
+        .sub(centerLocal);
+
+
+    /*
+      Mur situé principalement devant/derrière :
+
+      son déplacement horizontal principal
+      est sur Z.
+
+      Sa charnière est donc parallèle à X.
+    */
+
+    if (
+      Math.abs(offset.z)
+      >= Math.abs(offset.x)
+    ) {
+      return {
+        axis: "x",
+
+        angle:
+          Math.sign(offset.z || 1)
+          * Math.PI / 2,
+      };
+    }
+
+
+    /*
+      Mur situé principalement à gauche/droite :
+
+      son déplacement principal est sur X.
+
+      Sa charnière est donc parallèle à Z.
+    */
+
+    return {
+      axis: "z",
+
+      angle:
+        -Math.sign(offset.x || 1)
+        * Math.PI / 2,
+    };
+  }
+
+
+  // ==================================================
+  // ANIMATION D'UN MUR + SON RUBAN
+  // ==================================================
+
+  function animateWall({
+    wall,
+    ribbon,
+    start,
+  }) {
+    const {
+      axis,
+      angle,
+    } =
+      getOpeningDirection(wall);
+
+    const initialWallRotation =
+      wall.rotation[axis];
+
+    const initialRibbonRotation =
+      ribbon.rotation[axis];
+
+
+    /*
+      On ne va jamais jusqu'à 90° pile.
+
+      0.975 * 90° ≈ 87.75°.
+
+      Visuellement c'est posé au sol,
+      mais ça évite que la géométrie
+      traverse le floor.
+    */
+    const restingAngle =
+      angle * 0.975;
+
+
+    /*
+      Premier impact légèrement AVANT
+      la position finale.
+
+      Surtout pas au-delà de 90°.
+    */
+    const impactAngle =
+      angle * 0.955;
+
+
+    /*
+      Petit rebond vers le haut.
+    */
+    const bounceAngle =
+      angle * 0.91;
+
+
+    // ----------------------------------------------
+    // CHUTE PRINCIPALE
+    // ----------------------------------------------
+
+    tl.to(
+      wall.rotation,
+      {
+        [axis]:
+          initialWallRotation
+          + impactAngle,
+
+        duration: 0.58,
+        ease: "power2.in",
+      },
+      start
+    );
+
+    tl.to(
+      ribbon.rotation,
+      {
+        [axis]:
+          initialRibbonRotation
+          + impactAngle,
+
+        duration: 0.58,
+        ease: "power2.in",
+      },
+      start
+    );
+
+
+    // ----------------------------------------------
+    // PETIT REBOND
+    // ----------------------------------------------
+
+    tl.to(
+      wall.rotation,
+      {
+        [axis]:
+          initialWallRotation
+          + bounceAngle,
+
+        duration: 0.11,
+        ease: "power2.out",
+      }
+    );
+
+    tl.to(
+      ribbon.rotation,
+      {
+        [axis]:
+          initialRibbonRotation
+          + bounceAngle,
+
+        duration: 0.11,
+        ease: "power2.out",
+      },
+      "<"
+    );
+
+
+    // ----------------------------------------------
+    // RETOMBE À SA POSITION FINALE
+    // ----------------------------------------------
+
+    tl.to(
+      wall.rotation,
+      {
+        [axis]:
+          initialWallRotation
+          + restingAngle,
+
+        duration: 0.16,
+        ease: "power2.in",
+      }
+    );
+
+    tl.to(
+      ribbon.rotation,
+      {
+        [axis]:
+          initialRibbonRotation
+          + restingAngle,
+
+        duration: 0.16,
+        ease: "power2.in",
+      },
+      "<"
+    );
+  }
+
+
+  // ==================================================
+  // OUVERTURE DES 4 CÔTÉS
+  // ==================================================
+
+  /*
+    Pas parfaitement simultanés.
+
+    Ça évite l'effet mécanique où les
+    quatre murs font exactement la même chose.
+  */
+
+  animateWall({
+    wall: boxFront,
+    ribbon: ribbonFront,
+    start: 0,
+  });
+
+
+  animateWall({
+    wall: boxRight,
+    ribbon: ribbonRight,
+    start: 0.05,
+  });
+
+
+  animateWall({
+    wall: boxLeft,
+    ribbon: ribbonLeft,
+    start: 0.10,
+  });
+
+
+  animateWall({
+    wall: boxBack,
+    ribbon: ribbonBack,
+    start: 0.15,
+  });
+
+
+  return tl;
+}

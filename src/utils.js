@@ -25,14 +25,44 @@ export function normalizeModel(model, targetHeight = 2.5) {
 }
 
 export async function getGiftParts(giftModel) {
+  // Fond de la boîte
   const box =
     giftModel.getObjectByName("Box");
 
-  const lid =
-    giftModel.getObjectByName("Lid");
+  // Murs
+  const boxFront =
+    giftModel.getObjectByName("BoxFront");
 
+  const boxBack =
+    giftModel.getObjectByName("BoxBack");
+
+  const boxLeft =
+    giftModel.getObjectByName("BoxLeft");
+
+  const boxRight =
+    giftModel.getObjectByName("BoxRight");
+
+
+  // Rubans des murs
   const ribbonBody =
     giftModel.getObjectByName("RibbonBody");
+
+  const ribbonFront =
+    giftModel.getObjectByName("RibbonFront");
+
+  const ribbonBack =
+    giftModel.getObjectByName("RibbonBack");
+
+  const ribbonLeft =
+    giftModel.getObjectByName("RibbonLeft");
+
+  const ribbonRight =
+    giftModel.getObjectByName("RibbonRight");
+
+
+  // Couvercle
+  const lid =
+    giftModel.getObjectByName("Lid");
 
   const ribbonLid =
     giftModel.getObjectByName("RibbonLid");
@@ -43,10 +73,23 @@ export async function getGiftParts(giftModel) {
   const pullTail =
     giftModel.getObjectByName("PullTail");
 
+
   return {
     box,
-    lid,
+
+    boxFront,
+    boxBack,
+    boxLeft,
+    boxRight,
+
     ribbonBody,
+
+    ribbonFront,
+    ribbonBack,
+    ribbonLeft,
+    ribbonRight,
+
+    lid,
     ribbonLid,
     bow,
     pullTail,

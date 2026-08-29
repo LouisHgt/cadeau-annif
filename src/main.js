@@ -13,6 +13,7 @@ import {
 import {
   playGiftDrop,
   playLidFall,
+  playBoxOpen,
 } from "./animations.js";
 
 import {
@@ -357,14 +358,59 @@ const ribbonInteraction =
         "Ruban entièrement tiré !"
       );
 
-      playLidFall({
-        lid: giftParts.lid,
-        ribbonLid: giftParts.ribbonLid,
-        bow: giftParts.bow,
-        pullTail: giftParts.pullTail,
-        scene,
-        camera,
-      });
+      const lidTimeline =
+        playLidFall({
+          lid:
+            giftParts.lid,
+
+          ribbonLid:
+            giftParts.ribbonLid,
+
+          bow:
+            giftParts.bow,
+
+          pullTail:
+            giftParts.pullTail,
+
+          scene,
+
+          camera,
+        });
+
+
+      lidTimeline.eventCallback(
+        "onComplete",
+        () => {
+          playBoxOpen({
+            box:
+              giftParts.box,
+
+            boxFront:
+              giftParts.boxFront,
+
+            boxBack:
+              giftParts.boxBack,
+
+            boxLeft:
+              giftParts.boxLeft,
+
+            boxRight:
+              giftParts.boxRight,
+
+            ribbonFront:
+              giftParts.ribbonFront,
+
+            ribbonBack:
+              giftParts.ribbonBack,
+
+            ribbonLeft:
+              giftParts.ribbonLeft,
+
+            ribbonRight:
+              giftParts.ribbonRight,
+          });
+        }
+      );
     },
   });
 
