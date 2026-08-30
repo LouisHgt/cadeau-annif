@@ -2,6 +2,9 @@ import * as THREE from "three";
 import giftModelUrl from "./assets/models/gift-prepared.glb?url";
 import cakeModelUrl from "./assets/models/cake-prepared.glb?url";
 import flameTextureUrl from "./assets/models/flames.gif?url";
+import characterModelUrl from "./assets/models/character.glb?url";
+import danceModelUrl from "./assets/models/dance.glb?url";
+import faceTextureUrl from "./assets/models/crane.png?url";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import "./style.css";
@@ -42,6 +45,10 @@ import {
 import {
   createConfetti,
 } from "./confetti.js";
+
+import {
+  createDancingCharacter,
+} from "./dancing-character.js";
 
 const SHOWCASE_Y_ROTATION =
   Math.PI * 0.35;
@@ -405,6 +412,18 @@ const confetti =
     scene,
   });
 
+const dancingCharacter =
+  await createDancingCharacter({
+    scene,
+    camera,
+    loader,
+    characterUrl:
+      characterModelUrl,
+    danceUrl:
+      danceModelUrl,
+    faceTextureUrl,
+  });
+
 const confettiOrigin =
   new THREE.Vector3();
 
@@ -430,6 +449,10 @@ const candleInteraction =
 
       confetti.burst(
         confettiOrigin
+      );
+
+      dancingCharacter.show(
+        cakeModel
       );
     },
   });
@@ -601,6 +624,7 @@ window.addEventListener(
       wishDialog.reset();
       candleInteraction.reset();
       confetti.reset();
+      dancingCharacter.reset();
 
       const introTimeline =
         playGiftDrop(
@@ -665,6 +689,10 @@ function render(time = 0) {
   );
 
   confetti.update(
+    time * 0.001
+  );
+
+  dancingCharacter.update(
     time * 0.001
   );
 
