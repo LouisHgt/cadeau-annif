@@ -9,8 +9,21 @@ import {
 
 const TARGET_HEIGHT = 1.65;
 
-const FACE_WIDTH = 1.2;
+const FACE_WIDTH = 1.34;
 const FACE_ASPECT = 1206 / 1102;
+
+const MODEL_YAW_OFFSET =
+  -Math.PI * 0.12;
+
+const MIRRORED_ARM_BONES =
+  new Set([
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+  ]);
 
 const BONE_NAMES = {
   LowerTorso:
@@ -475,6 +488,24 @@ function createRetargetedDance({
           mapping.sourceRestWorldInverse
         );
 
+      /*
+        Les deux rigs ont des conventions avant/arrière
+        opposées pour les bras. Cette réflexion sur Z inverse
+        leur flexion sans échanger le côté gauche et le droit.
+      */
+      if (
+        MIRRORED_ARM_BONES.has(
+          mapping.targetName
+        )
+      ) {
+        worldDelta.set(
+          -worldDelta.x,
+          -worldDelta.y,
+          worldDelta.z,
+          worldDelta.w,
+        );
+      }
+
       desiredWorld
         .copy(worldDelta)
         .multiply(
@@ -798,7 +829,7 @@ export async function createDancingCharacter({
 
         camera.position.z
           - root.position.z,
-      ),
+      ) + MODEL_YAW_OFFSET,
       0,
     );
   }
