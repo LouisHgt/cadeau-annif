@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import giftModelUrl from "./assets/models/gift-prepared.glb?url";
-import cakeModelUrl from "./assets/models/cake.glb?url";
+import cakeModelUrl from "./assets/models/cake-prepared.glb?url";
+import flameTextureUrl from "./assets/models/flames.gif?url";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import "./style.css";
@@ -25,6 +26,10 @@ import {
 import {
   createRibbonInteraction,
 } from "./interactions.js";
+
+import {
+  createCakeFlames,
+} from "./cake-flames.js";
 
 const SHOWCASE_Y_ROTATION =
   Math.PI * 0.35;
@@ -208,6 +213,20 @@ const cake =
 const cakeModel =
   cake.scene;
 
+console.log(
+  "===== STRUCTURE CAKE ====="
+);
+
+cakeModel.traverse(
+  (object) => {
+    console.log(
+      object.name,
+      object.type
+    );
+  }
+);
+
+
 makeModelRetro(
   cakeModel
 );
@@ -346,6 +365,14 @@ cakeModel.position.z -=
 */
 cakeModel.position.y -=
   scaledCakeBounds.min.y;
+
+
+const cakeFlames =
+  await createCakeFlames({
+    cakeModel,
+    textureUrl:
+      flameTextureUrl,
+  });
 
 
 // -----------------------------------------------------
@@ -549,9 +576,13 @@ window.addEventListener(
 // RENDER LOOP
 // =====================================================
 
-function render() {
+function render(time = 0) {
   requestAnimationFrame(
     render,
+  );
+
+  cakeFlames.update(
+    time * 0.001
   );
 
   composer.render();
