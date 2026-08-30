@@ -1,8 +1,5 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
-import {
-  retargetClip,
-} from "three/examples/jsm/utils/SkeletonUtils.js";
 
 import {
   makeModelRetro,
@@ -64,18 +61,18 @@ const BONE_NAMES = {
 
 
 function findSkinnedMesh(model) {
-  let skinnedMesh = null;
+  let result = null;
 
   model.traverse((object) => {
     if (
-      !skinnedMesh
+      !result
       && object.isSkinnedMesh
     ) {
-      skinnedMesh = object;
+      result = object;
     }
   });
 
-  return skinnedMesh;
+  return result;
 }
 
 
@@ -102,6 +99,13 @@ function getCharacterBounds(model) {
     );
   });
 
+  if (bounds.isEmpty()) {
+    bounds.setFromObject(
+      model,
+      true,
+    );
+  }
+
   return bounds;
 }
 
@@ -109,15 +113,6 @@ function getCharacterBounds(model) {
 function normalizeCharacter(model) {
   let bounds =
     getCharacterBounds(model);
-
-  if (bounds.isEmpty()) {
-    bounds =
-      new THREE.Box3()
-        .setFromObject(
-          model,
-          true,
-        );
-  }
 
   const size =
     bounds.getSize(
@@ -163,6 +158,421 @@ function hideRigHelpers(model) {
 }
 
 
+function captureBonePose(bones) {
+  return bones.map(
+    (bone) => ({
+      bone,
+
+      position:
+        bone.position.clone(),
+
+      quaternion:
+        bone.quaternion.clone(),
+
+      scale:
+        bone.scale.clone(),
+    })
+  );
+}
+
+
+function restoreBonePose({
+  pose,
+  model,
+}) {
+  for (const transform of pose) {
+    transform.bone.position.copy(
+      transform.position
+    );
+
+    transform.bone.quaternion.copy(
+      transform.quaternion
+    );
+
+    transform.bone.scale.copy(
+      transform.scale
+    );
+
+    transform.bone.updateMatrix();
+  }
+
+  model.updateMatrixWorld(true);
+}
+
+
+function getBoneDepth(bone) {
+  let depth = 0;
+  let parent = bone.parent;
+
+  while (parent) {
+    depth += 1;
+    parent = parent.parent;
+  }
+
+  return depth;
+}
+
+
+function createRetargetedDance({
+  characterModel,
+  danceModel,
+  sourceClip,
+}) {
+  const targetMesh =
+    characterModel.getObjectByName(
+      "LowerTorso_Geo"
+    )
+    ?? findSkinnedMesh(
+      characterModel
+    );
+
+  if (!targetMesh) {
+    throw new Error(
+      "No skinned mesh was found in character.glb"
+    );
+  }
+
+  if (!sourceClip) {
+    throw new Error(
+      "No animation clip was found in dance.glb"
+    );
+  }
+
+  const targetPose =
+    captureBonePose(
+      targetMesh.skeleton.bones
+    );
+
+  const mappedBones =
+    Object.entries(BONE_NAMES)
+      .map(([
+        targetName,
+        sourceName,
+      ]) => {
+        const targetBone =
+          characterModel.getObjectByName(
+            targetName
+          );
+
+        const sourceBone =
+          danceModel.getObjectByName(
+            sourceName
+          );
+
+        if (!targetBone?.isBone) {
+          throw new Error(
+            `The target bone "${targetName}" was not found`
+          );
+        }
+
+        if (!sourceBone?.isBone) {
+          throw new Error(
+            `The source bone "${sourceName}" was not found`
+          );
+        }
+
+        return {
+          targetName,
+          targetBone,
+          sourceBone,
+          targetRestWorld:
+            new THREE.Quaternion(),
+          sourceRestWorldInverse:
+            new THREE.Quaternion(),
+        };
+      })
+      .sort(
+        (left, right) =>
+          getBoneDepth(left.targetBone)
+          - getBoneDepth(right.targetBone)
+      );
+
+  restoreBonePose({
+    pose:
+      targetPose,
+    model:
+      characterModel,
+  });
+
+  danceModel.updateMatrixWorld(true);
+
+  for (const mapping of mappedBones) {
+    mapping.targetBone.getWorldQuaternion(
+      mapping.targetRestWorld
+    );
+
+    mapping.sourceBone.getWorldQuaternion(
+      mapping.sourceRestWorldInverse
+    );
+
+    mapping.sourceRestWorldInverse.invert();
+  }
+
+  const targetBounds =
+    getCharacterBounds(
+      characterModel
+    );
+
+  const danceBounds =
+    new THREE.Box3()
+      .setFromObject(
+        danceModel,
+        true,
+      );
+
+  const targetHeight =
+    targetBounds.getSize(
+      new THREE.Vector3()
+    ).y;
+
+  const danceHeight =
+    danceBounds.getSize(
+      new THREE.Vector3()
+    ).y;
+
+  const translationScale =
+    targetHeight / danceHeight;
+
+  const frameCount =
+    Math.max(
+      ...sourceClip.tracks.map(
+        (track) =>
+          track.times.length
+      )
+    );
+
+  const times =
+    new Float32Array(
+      frameCount
+    );
+
+  const quaternionValues =
+    new Map(
+      mappedBones.map(
+        ({ targetName }) => [
+          targetName,
+          new Float32Array(
+            frameCount * 4
+          ),
+        ]
+      )
+    );
+
+  const hipsPositionValues =
+    new Float32Array(
+      frameCount * 3
+    );
+
+  const sourceMixer =
+    new THREE.AnimationMixer(
+      danceModel
+    );
+
+  sourceMixer
+    .clipAction(sourceClip)
+    .play();
+
+  sourceMixer.setTime(0);
+  danceModel.updateMatrixWorld(true);
+
+  const sourceHips =
+    danceModel.getObjectByName(
+      BONE_NAMES.LowerTorso
+    );
+
+  const targetHips =
+    characterModel.getObjectByName(
+      "LowerTorso"
+    );
+
+  const sourceHipsStart =
+    sourceHips.getWorldPosition(
+      new THREE.Vector3()
+    );
+
+  const targetHipsStart =
+    targetPose.find(
+      ({ bone }) =>
+        bone === targetHips
+    ).position.clone();
+
+  const sourceWorld =
+    new THREE.Quaternion();
+
+  const worldDelta =
+    new THREE.Quaternion();
+
+  const desiredWorld =
+    new THREE.Quaternion();
+
+  const parentWorldInverse =
+    new THREE.Quaternion();
+
+  const localQuaternion =
+    new THREE.Quaternion();
+
+  const previousQuaternion =
+    new THREE.Quaternion();
+
+  const sourceHipsPosition =
+    new THREE.Vector3();
+
+  for (
+    let frame = 0;
+    frame < frameCount;
+    frame += 1
+  ) {
+    const time =
+      frameCount === 1
+        ? 0
+        : sourceClip.duration
+          * frame
+          / (frameCount - 1);
+
+    times[frame] = time;
+
+    sourceMixer.setTime(time);
+    danceModel.updateMatrixWorld(true);
+
+    restoreBonePose({
+      pose:
+        targetPose,
+      model:
+        characterModel,
+    });
+
+    sourceHips.getWorldPosition(
+      sourceHipsPosition
+    );
+
+    targetHips.position.copy(
+      targetHipsStart
+    );
+
+    targetHips.position.y +=
+      (
+        sourceHipsPosition.y
+        - sourceHipsStart.y
+      )
+      * translationScale;
+
+    targetHips.updateMatrix();
+    characterModel.updateMatrixWorld(true);
+
+    targetHips.position.toArray(
+      hipsPositionValues,
+      frame * 3,
+    );
+
+    for (const mapping of mappedBones) {
+      mapping.sourceBone.getWorldQuaternion(
+        sourceWorld
+      );
+
+      worldDelta
+        .copy(sourceWorld)
+        .multiply(
+          mapping.sourceRestWorldInverse
+        );
+
+      desiredWorld
+        .copy(worldDelta)
+        .multiply(
+          mapping.targetRestWorld
+        );
+
+      mapping.targetBone.parent
+        .getWorldQuaternion(
+          parentWorldInverse
+        );
+
+      parentWorldInverse.invert();
+
+      localQuaternion
+        .copy(parentWorldInverse)
+        .multiply(desiredWorld)
+        .normalize();
+
+      const values =
+        quaternionValues.get(
+          mapping.targetName
+        );
+
+      if (frame > 0) {
+        previousQuaternion.fromArray(
+          values,
+          (frame - 1) * 4,
+        );
+
+        if (
+          previousQuaternion.dot(
+            localQuaternion
+          ) < 0
+        ) {
+          localQuaternion.set(
+            -localQuaternion.x,
+            -localQuaternion.y,
+            -localQuaternion.z,
+            -localQuaternion.w,
+          );
+        }
+      }
+
+      mapping.targetBone.quaternion.copy(
+        localQuaternion
+      );
+
+      mapping.targetBone.updateMatrix();
+      mapping.targetBone.updateMatrixWorld(true);
+
+      localQuaternion.toArray(
+        values,
+        frame * 4,
+      );
+    }
+  }
+
+  sourceMixer.stopAllAction();
+
+  restoreBonePose({
+    pose:
+      targetPose,
+    model:
+      characterModel,
+  });
+
+  const tracks = [
+    new THREE.VectorKeyframeTrack(
+      ".bones[LowerTorso].position",
+      times,
+      hipsPositionValues,
+    ),
+
+    ...mappedBones.map(
+      ({ targetName }) =>
+        new THREE.QuaternionKeyframeTrack(
+          `.bones[${targetName}].quaternion`,
+          times,
+          quaternionValues.get(
+            targetName
+          ),
+        )
+    ),
+  ];
+
+  return {
+    targetMesh,
+    targetPose,
+    clip:
+      new THREE.AnimationClip(
+        "DanceRetargeted",
+        sourceClip.duration,
+        tracks,
+      ),
+  };
+}
+
+
 function attachFaceSprite({
   head,
   texture,
@@ -181,6 +591,9 @@ function attachFaceSprite({
 
       transparent:
         true,
+
+      depthTest:
+        false,
 
       depthWrite:
         false,
@@ -209,95 +622,11 @@ function attachFaceSprite({
     1,
   );
 
-  sprite.renderOrder = 12;
+  sprite.renderOrder = 30;
 
   head.add(
     sprite
   );
-
-  return sprite;
-}
-
-
-function createRetargetedDance({
-  characterModel,
-  danceModel,
-  sourceClip,
-}) {
-  const targetMesh =
-    characterModel.getObjectByName(
-      "Head_Geo"
-    )
-    ?? findSkinnedMesh(
-      characterModel
-    );
-
-  const sourceMesh =
-    findSkinnedMesh(
-      danceModel
-    );
-
-  if (!targetMesh) {
-    throw new Error(
-      "No skinned mesh was found in character.glb"
-    );
-  }
-
-  if (!sourceMesh) {
-    throw new Error(
-      "No skinned mesh was found in dance.glb"
-    );
-  }
-
-  if (!sourceClip) {
-    throw new Error(
-      "No animation clip was found in dance.glb"
-    );
-  }
-
-  const clip =
-    retargetClip(
-      targetMesh,
-      sourceMesh,
-      sourceClip,
-      {
-        names:
-          BONE_NAMES,
-
-        hip:
-          "mixamorigHips",
-
-        hipInfluence:
-          new THREE.Vector3(
-            0,
-            1,
-            0,
-          ),
-
-        useFirstFramePosition:
-          true,
-
-        preserveBonePositions:
-          true,
-      }
-    );
-
-  clip.name =
-    "DanceRetargeted";
-
-  if (clip.tracks.length === 0) {
-    throw new Error(
-      "The dance could not be retargeted to the character"
-    );
-  }
-
-  targetMesh.skeleton.pose();
-  characterModel.updateMatrixWorld(true);
-
-  return {
-    targetMesh,
-    clip,
-  };
 }
 
 
@@ -338,13 +667,18 @@ export async function createDancingCharacter({
     characterModel
   );
 
-  normalizeCharacter(
-    characterModel
-  );
-
-  makeModelRetro(
-    characterModel
-  );
+  const {
+    targetMesh,
+    targetPose,
+    clip,
+  } =
+    createRetargetedDance({
+      characterModel,
+      danceModel:
+        dance.scene,
+      sourceClip:
+        dance.animations[0],
+    });
 
   const head =
     characterModel.getObjectByName(
@@ -363,17 +697,13 @@ export async function createDancingCharacter({
       faceTexture,
   });
 
-  const {
-    targetMesh,
-    clip,
-  } =
-    createRetargetedDance({
-      characterModel,
-      danceModel:
-        dance.scene,
-      sourceClip:
-        dance.animations[0],
-    });
+  normalizeCharacter(
+    characterModel
+  );
+
+  makeModelRetro(
+    characterModel
+  );
 
   const root =
     new THREE.Group();
@@ -543,7 +873,13 @@ export async function createDancingCharacter({
     previousTime = null;
 
     action.stop();
-    targetMesh.skeleton.pose();
+
+    restoreBonePose({
+      pose:
+        targetPose,
+      model:
+        characterModel,
+    });
 
     root.scale.setScalar(1);
     root.visible = false;
