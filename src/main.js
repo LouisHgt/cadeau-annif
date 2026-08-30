@@ -50,6 +50,10 @@ import {
   createDancingCharacter,
 } from "./dancing-character.js";
 
+import {
+  playFallingSound,
+} from "./audio.js";
+
 const SHOWCASE_Y_ROTATION =
   Math.PI * 0.35;
 
@@ -488,12 +492,14 @@ const ribbonInteraction =
     maxPullDistance:
       1.2,
 
+    /*
     onProgress(progress) {
       console.log(
         "Ribbon:",
         progress.toFixed(2)
       );
     },
+    */
 
     onComplete() {
       console.log(
@@ -577,6 +583,7 @@ const ribbonInteraction =
     },
   });
 
+
 // =====================================================
 // ANIMATION INTRO
 // =====================================================
@@ -590,6 +597,8 @@ const introTimeline =
     }
   );
 
+introTimeline.pause(0);
+
 
 introTimeline.eventCallback(
   "onComplete",
@@ -601,6 +610,63 @@ introTimeline.eventCallback(
     );
   }
 );
+
+const startScreen =
+  document.querySelector(
+    "[data-start-screen]"
+  );
+
+const startButton =
+  document.querySelector(
+    "[data-start-button]"
+  );
+
+if (!startScreen || !startButton) {
+  throw new Error(
+    "The start screen is missing from index.html"
+  );
+}
+
+let hasStarted = false;
+
+startButton.textContent =
+  "[ COMMENCER ▶ ]";
+
+startButton.disabled = false;
+
+startButton.addEventListener(
+  "click",
+  () => {
+    hasStarted = true;
+    startButton.disabled = true;
+
+    playFallingSound();
+    introTimeline.play(0);
+
+    startScreen.classList.add(
+      "is-leaving"
+    );
+
+    startScreen.setAttribute(
+      "aria-hidden",
+      "true",
+    );
+
+    window.setTimeout(
+      () => {
+        startScreen.hidden = true;
+      },
+      180,
+    );
+  },
+  {
+    once: true,
+  },
+);
+
+startButton.focus({
+  preventScroll: true,
+});
 
 // =====================================================
 // DEBUG
@@ -618,6 +684,10 @@ window.addEventListener(
       return;
     }
 
+    if (!hasStarted) {
+      return;
+    }
+
     if (event.code === "KeyR") {
       ribbonInteraction.disable();
       ribbonInteraction.reset();
@@ -625,6 +695,8 @@ window.addEventListener(
       candleInteraction.reset();
       confetti.reset();
       dancingCharacter.reset();
+
+      playFallingSound();
 
       const introTimeline =
         playGiftDrop(

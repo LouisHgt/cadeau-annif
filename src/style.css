@@ -53,6 +53,67 @@ input {
   border: 0;
 }
 
+.start-screen {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 18px;
+  background: rgba(5, 5, 9, 0.92);
+  color: #f0ead6;
+  font-family:
+    "Courier New",
+    ui-monospace,
+    monospace;
+  text-align: center;
+  text-shadow: 2px 2px 0 #171b29;
+  transition: opacity 140ms steps(3, end);
+}
+
+.start-screen.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.start-screen__title {
+  margin: 0;
+  color: #ffd77d;
+  font-size: clamp(15px, 2.2vw, 22px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.start-screen__button {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 2px solid #e5dfca;
+  border-radius: 0;
+  outline: 0;
+  background: #090d18;
+  color: #f0ead6;
+  box-shadow:
+    3px 3px 0 #3c4359,
+    inset 0 0 0 1px rgba(205, 213, 229, 0.22);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.start-screen__button:hover,
+.start-screen__button:focus-visible {
+  background: #e5dfca;
+  color: #0b0e19;
+  text-shadow: none;
+}
+
+.start-screen__button:disabled {
+  color: #74798b;
+  cursor: wait;
+}
+
 .wish-dialog {
   position: absolute;
   z-index: 10;
@@ -274,6 +335,10 @@ input {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .start-screen {
+    transition: none;
+  }
+
   .wish-dialog {
     transition: none;
   }

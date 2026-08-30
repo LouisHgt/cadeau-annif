@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {howl} from "howler";
 
 export function normalizeModel(model, targetHeight = 2.5) {
   const box = new THREE.Box3().setFromObject(model);
@@ -94,4 +95,8 @@ export async function getGiftParts(giftModel) {
     bow,
     pullTail,
   };
+}
+
+export async function sleep(ms) {
+  await new Promise(resolve => setTimeout(resolve, ms));
 }

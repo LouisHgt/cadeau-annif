@@ -9,6 +9,21 @@
   <body>
     <div id="app">
       <section
+        class="start-screen"
+        data-start-screen
+        aria-label="Démarrer le cadeau"
+      >
+        <button
+          class="start-screen__button"
+          type="button"
+          data-start-button
+          disabled
+        >
+          [ CHARGEMENT... ]
+        </button>
+      </section>
+
+      <section
         class="wish-dialog"
         data-wish-dialog
         data-state="hidden"
