@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node server.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "node server.js --production",
+    "start": "node server.js --production"
   },
   "devDependencies": {
     "vite": "^8.2.2"

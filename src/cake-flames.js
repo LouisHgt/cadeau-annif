@@ -18,6 +18,8 @@ const FLAME_TILES = [
 const GOLDEN_ANGLE =
   Math.PI * (3 - Math.sqrt(5));
 
+const EXTINGUISH_DURATION = 0.2;
+
 const corner =
   new THREE.Vector3();
 
@@ -441,10 +443,21 @@ export async function createCakeFlames({
         );
 
         return {
+          index,
           rig,
           flame,
           glow,
+          flameMaterial,
           glowMaterial,
+
+          state:
+            "lit",
+
+          extinguishStartedAt:
+            0,
+
+          resolveExtinguish:
+            null,
 
           baseY:
             center.y,
@@ -465,24 +478,94 @@ export async function createCakeFlames({
       },
     );
 
+  let lastElapsedTime = 0;
+
+
+  function extinguish(index) {
+    const currentFlame =
+      flames[index];
+
+    if (
+      !currentFlame
+      || currentFlame.state !== "lit"
+    ) {
+      return null;
+    }
+
+    currentFlame.state =
+      "extinguishing";
+
+    currentFlame.extinguishStartedAt =
+      lastElapsedTime;
+
+    return new Promise((resolve) => {
+      currentFlame.resolveExtinguish =
+        resolve;
+    });
+  }
+
+
+  function reset() {
+    for (const currentFlame of flames) {
+      currentFlame.resolveExtinguish?.();
+
+      currentFlame.state = "lit";
+      currentFlame.resolveExtinguish = null;
+      currentFlame.rig.visible = true;
+
+      currentFlame.flameMaterial.opacity = 1;
+      currentFlame.glowMaterial.opacity = 0.34;
+    }
+  }
+
   return {
+    extinguish,
+    reset,
+
+    isLit(index) {
+      return flames[index]?.state === "lit";
+    },
+
+    getHitTarget(index) {
+      return flames[index]?.rig
+        ?? null;
+    },
+
     update(elapsedTime) {
+      lastElapsedTime =
+        elapsedTime;
+
       // Un GIF dans une texture WebGL doit être renvoyé au GPU
       // pour que le navigateur affiche sa frame courante.
-      for (const texture of animatedTextures) {
-        texture.needsUpdate = true;
+      if (
+        flames.some(
+          ({ state }) => state !== "extinguished"
+        )
+      ) {
+        for (const texture of animatedTextures) {
+          texture.needsUpdate = true;
+        }
       }
 
       for (const {
+        index,
         rig,
         flame,
         glow,
+        flameMaterial,
         glowMaterial,
         baseY,
         verticalAmplitude,
         phase,
         speed,
       } of flames) {
+        const currentFlame =
+          flames[index];
+
+        if (currentFlame.state === "extinguished") {
+          continue;
+        }
+
         const wave =
           Math.sin(
             (elapsedTime * speed)
@@ -517,7 +600,7 @@ export async function createCakeFlames({
             + (flutter * 0.035)
           );
 
-        rig.position.y =
+        let y =
           baseY
           + (
             verticalAmplitude
@@ -527,11 +610,51 @@ export async function createCakeFlames({
             )
           );
 
+        let visibility = 1;
+
+        if (currentFlame.state === "extinguishing") {
+          const progress =
+            THREE.MathUtils.clamp(
+              (
+                elapsedTime
+                - currentFlame.extinguishStartedAt
+              )
+              / EXTINGUISH_DURATION,
+              0,
+              1,
+            );
+
+          visibility =
+            1 - progress;
+
+          y +=
+            referenceSize
+            * progress
+            * 0.45;
+
+          if (progress >= 1) {
+            currentFlame.state =
+              "extinguished";
+
+            rig.visible = false;
+
+            currentFlame.resolveExtinguish?.();
+            currentFlame.resolveExtinguish = null;
+
+            continue;
+          }
+        }
+
+        rig.position.y = y;
+
         flame.scale.set(
-          width,
-          height,
+          width * visibility,
+          height * visibility,
           1,
         );
+
+        flameMaterial.opacity =
+          visibility;
 
         const glowPulse =
           1
@@ -539,14 +662,17 @@ export async function createCakeFlames({
           + (flutter * 0.04);
 
         glow.scale.set(
-          glowSize * glowPulse,
-          glowSize * glowPulse,
+          glowSize * glowPulse * visibility,
+          glowSize * glowPulse * visibility,
           1,
         );
 
         glowMaterial.opacity =
-          0.31
-          + ((wave + 1) * 0.035);
+          (
+            0.31
+            + ((wave + 1) * 0.035)
+          )
+          * visibility;
       }
     },
   };

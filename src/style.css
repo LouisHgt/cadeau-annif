@@ -1,24 +1,285 @@
 html,
 body,
 #app {
-    width: 100%;
-    height: 100%;
-    margin: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
-    overflow: hidden;
-    background: #050505;
+  overflow: hidden;
+  background: #050505;
 }
 
 #app {
-    display: grid;
-    place-items: center;
+  --game-width: min(100vw, 133.333vh);
+  --game-height: min(75vw, 100vh);
+  --dialog-inset: clamp(10px, 1.8vw, 22px);
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
 }
 
 canvas {
-    width: min(100vw, 133.333vh);
-    height: min(75vw, 100vh);
+  display: block;
+  width: var(--game-width);
+  height: var(--game-height);
 
-    image-rendering: pixelated;
+  image-rendering: pixelated;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wish-dialog {
+  position: absolute;
+  z-index: 10;
+  left:
+    calc(
+      ((100vw - var(--game-width)) / 2)
+      + var(--dialog-inset)
+    );
+  bottom:
+    calc(
+      ((100vh - var(--game-height)) / 2)
+      + var(--dialog-inset)
+    );
+
+  width:
+    min(
+      21rem,
+      calc(var(--game-width) - (var(--dialog-inset) * 2))
+    );
+
+  padding: 14px 16px 12px;
+  border: 2px solid #e5dfca;
+  border-radius: 1px;
+  background: rgba(7, 10, 20, 0.91);
+  box-shadow:
+    3px 3px 0 rgba(33, 39, 58, 0.95),
+    inset 0 0 0 2px rgba(83, 91, 118, 0.55);
+
+  color: #f0ead6;
+  font-family:
+    "Courier New",
+    ui-monospace,
+    monospace;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-shadow: 1px 1px 0 #111522;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+  transition:
+    opacity 160ms steps(3, end),
+    transform 180ms steps(4, end);
+}
+
+.wish-dialog[hidden] {
+  display: none;
+}
+
+.wish-dialog::before {
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(205, 213, 229, 0.2);
+  content: "";
+  pointer-events: none;
+}
+
+.wish-dialog.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.wish-dialog__form {
+  margin: 0;
+}
+
+.wish-dialog__header {
+  display: flex;
+  align-items: baseline;
+  min-height: 1.5em;
+  margin-bottom: 14px;
+}
+
+.wish-dialog__marker {
+  flex: 0 0 auto;
+  margin-right: 8px;
+  color: #ffd77d;
+  animation: wish-marker-blink 1.4s steps(1, end) infinite;
+}
+
+.wish-dialog__title {
+  min-width: 0;
+  margin: 0;
+  font: inherit;
+}
+
+.wish-dialog__cursor {
+  display: none;
+  margin-left: 1px;
+  color: #ffd77d;
+}
+
+.wish-dialog[data-state="typing"] .wish-dialog__cursor {
+  display: inline;
+  animation: wish-cursor-blink 700ms steps(1, end) infinite;
+}
+
+.wish-dialog__input {
+  display: block;
+  width: 100%;
+  height: 30px;
+  padding: 2px 4px 5px;
+  border: 0;
+  border-bottom: 2px solid #d6d8dd;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: #fffaf0;
+  caret-color: #ffd77d;
+  box-shadow: none;
+  appearance: none;
+}
+
+.wish-dialog__input:focus {
+  border-bottom-color: #ffd77d;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.wish-dialog__input:disabled {
+  opacity: 0.55;
+}
+
+.wish-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 9px;
+}
+
+.wish-dialog__counter {
+  color: #9398a9;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+
+.wish-dialog__submit {
+  min-height: 28px;
+  padding: 3px 5px;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  background: transparent;
+  color: #f0ead6;
+  cursor: pointer;
+  text-shadow: inherit;
+  transition: none;
+}
+
+.wish-dialog__submit:hover,
+.wish-dialog__submit:focus-visible {
+  background: #e5dfca;
+  color: #0b0e19;
+  box-shadow: 2px 2px 0 #606780;
+  text-shadow: none;
+}
+
+.wish-dialog__submit:disabled {
+  color: #74798b;
+  cursor: default;
+}
+
+.wish-dialog__status {
+  min-height: 1.4em;
+  margin: 6px 0 0;
+  color: #ffb073;
+  font-size: 11px;
+}
+
+.wish-dialog__confirmation {
+  min-height: 3.4em;
+  margin: 0;
+  padding: 14px 4px 8px;
+  color: #ffd77d;
+  text-align: left;
+}
+
+@keyframes wish-marker-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes wish-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  #app {
+    --dialog-inset: 10px;
+  }
+
+  .wish-dialog {
+    padding: 12px 13px 9px;
+    font-size: 12px;
+  }
+
+  .wish-dialog__input {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wish-dialog {
+    transition: none;
+  }
+
+  .wish-dialog__marker,
+  .wish-dialog__cursor {
+    animation: none;
+  }
 }

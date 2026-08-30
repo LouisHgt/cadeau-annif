@@ -31,6 +31,18 @@ import {
   createCakeFlames,
 } from "./cake-flames.js";
 
+import {
+  createWishDialog,
+} from "./wish-dialog.js";
+
+import {
+  createCandleInteraction,
+} from "./candle-interaction.js";
+
+import {
+  createConfetti,
+} from "./confetti.js";
+
 const SHOWCASE_Y_ROTATION =
   Math.PI * 0.35;
 
@@ -388,6 +400,53 @@ cakeRoot.position.set(
 );
 
 
+const confetti =
+  createConfetti({
+    scene,
+  });
+
+const confettiOrigin =
+  new THREE.Vector3();
+
+const candleInteraction =
+  createCandleInteraction({
+    cakeModel,
+    camera,
+    canvas:
+      renderer.domElement,
+    flameController:
+      cakeFlames,
+
+    onComplete() {
+      confettiOrigin.set(
+        0,
+        0.28,
+        0,
+      );
+
+      cakeModel.localToWorld(
+        confettiOrigin
+      );
+
+      confetti.burst(
+        confettiOrigin
+      );
+    },
+  });
+
+const wishDialog =
+  createWishDialog({
+    element:
+      document.querySelector(
+        "[data-wish-dialog]"
+      ),
+
+    onComplete() {
+      candleInteraction.enable();
+    },
+  });
+
+
  
 
 const ribbonInteraction =
@@ -475,8 +534,18 @@ const ribbonInteraction =
           boxTimeline.eventCallback(
             "onComplete",
             () => {
-              playCakeReveal(
-                cakeRoot
+              const cakeTimeline =
+                playCakeReveal(
+                  cakeRoot
+                );
+
+              cakeTimeline.eventCallback(
+                "onComplete",
+                () => {
+                  wishDialog.show({
+                    delay: 400,
+                  });
+                }
               );
             }
           );
@@ -518,10 +587,20 @@ introTimeline.eventCallback(
 window.addEventListener(
   "keydown",
   (event) => {
+    if (
+      event.target instanceof HTMLInputElement
+      || event.target instanceof HTMLTextAreaElement
+      || event.target?.isContentEditable
+    ) {
+      return;
+    }
 
     if (event.code === "KeyR") {
       ribbonInteraction.disable();
       ribbonInteraction.reset();
+      wishDialog.reset();
+      candleInteraction.reset();
+      confetti.reset();
 
       const introTimeline =
         playGiftDrop(
@@ -582,6 +661,10 @@ function render(time = 0) {
   );
 
   cakeFlames.update(
+    time * 0.001
+  );
+
+  confetti.update(
     time * 0.001
   );
 

@@ -1,13 +1,86 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cadeau-annif</title>
+    <title>Joyeux anniversaire</title>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <section
+        class="wish-dialog"
+        data-wish-dialog
+        data-state="hidden"
+        role="dialog"
+        aria-labelledby="wish-dialog-title"
+        aria-hidden="true"
+        hidden
+      >
+        <form class="wish-dialog__form" data-wish-form novalidate>
+          <div data-wish-editor>
+            <header class="wish-dialog__header">
+              <span class="wish-dialog__marker" aria-hidden="true">✦</span>
+
+              <h2 class="wish-dialog__title" id="wish-dialog-title">
+                <span class="sr-only">Fais un vœu</span>
+                <span data-wish-title aria-hidden="true"></span>
+                <span class="wish-dialog__cursor" aria-hidden="true">_</span>
+              </h2>
+            </header>
+
+            <label class="sr-only" for="wish-input">Ton vœu</label>
+
+            <input
+              class="wish-dialog__input"
+              id="wish-input"
+              name="wish"
+              type="text"
+              maxlength="120"
+              autocomplete="off"
+              enterkeyhint="send"
+              spellcheck="true"
+              aria-describedby="wish-counter wish-status"
+              required
+              data-wish-input
+            />
+
+            <footer class="wish-dialog__footer">
+              <span
+                class="wish-dialog__counter"
+                id="wish-counter"
+                data-wish-counter
+              >0/120</span>
+
+              <button
+                class="wish-dialog__submit"
+                type="submit"
+                aria-label="Confirmer le vœu"
+                data-wish-submit
+              >
+                [ CONFIRMER ▶ ]
+              </button>
+            </footer>
+
+            <p
+              class="wish-dialog__status"
+              id="wish-status"
+              role="status"
+              aria-live="polite"
+              data-wish-status
+            ></p>
+          </div>
+
+          <p
+            class="wish-dialog__confirmation"
+            role="status"
+            aria-live="polite"
+            data-wish-confirmation
+            hidden
+          ></p>
+        </form>
+      </section>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
