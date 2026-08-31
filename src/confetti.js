@@ -106,6 +106,7 @@ export function createConfetti({
   );
 
   let active = false;
+  let settled = false;
   let startedAt = 0;
   let previousTime = 0;
 
@@ -179,6 +180,7 @@ export function createConfetti({
     });
 
     active = true;
+    settled = false;
     startedAt = 0;
     previousTime = 0;
 
@@ -190,64 +192,78 @@ export function createConfetti({
 
 
   function update(elapsedTime) {
-    if (!active) return;
+    if (!active && !settled) return;
 
-    if (startedAt === 0) {
-      startedAt = elapsedTime;
+    if (active) {
+      if (startedAt === 0) {
+        startedAt = elapsedTime;
+        previousTime = elapsedTime;
+      }
+
+      const age =
+        elapsedTime - startedAt;
+
+      const deltaTime =
+        Math.min(
+          elapsedTime - previousTime,
+          0.05,
+        );
+
       previousTime = elapsedTime;
+
+      for (const particle of particles) {
+        particle.velocity.y -=
+          GRAVITY * deltaTime;
+
+        particle.position.addScaledVector(
+          particle.velocity,
+          deltaTime,
+        );
+
+        particle.rotation.x +=
+          particle.angularVelocity.x
+          * deltaTime;
+
+        particle.rotation.y +=
+          particle.angularVelocity.y
+          * deltaTime;
+
+        particle.rotation.z +=
+          particle.angularVelocity.z
+          * deltaTime;
+      }
+
+      material.opacity =
+        THREE.MathUtils.clamp(
+          (CONFETTI_DURATION - age) / 0.7,
+          0,
+          1,
+        );
+
+      if (age >= CONFETTI_DURATION) {
+        active = false;
+        settled = true;
+
+        for (const particle of particles) {
+          particle.velocity.set(0, 0, 0);
+          particle.position.y = Math.max(0, particle.position.y);
+          particle.rotation.x = 0;
+          particle.rotation.y = 0;
+          particle.rotation.z = 0;
+          particle.angularVelocity.set(0, 0, 0);
+        }
+
+        material.opacity = 1;
+      }
     }
-
-    const age =
-      elapsedTime - startedAt;
-
-    const deltaTime =
-      Math.min(
-        elapsedTime - previousTime,
-        0.05,
-      );
-
-    previousTime = elapsedTime;
-
-    for (const particle of particles) {
-      particle.velocity.y -=
-        GRAVITY * deltaTime;
-
-      particle.position.addScaledVector(
-        particle.velocity,
-        deltaTime,
-      );
-
-      particle.rotation.x +=
-        particle.angularVelocity.x
-        * deltaTime;
-
-      particle.rotation.y +=
-        particle.angularVelocity.y
-        * deltaTime;
-
-      particle.rotation.z +=
-        particle.angularVelocity.z
-        * deltaTime;
-    }
-
-    material.opacity =
-      THREE.MathUtils.clamp(
-        (CONFETTI_DURATION - age) / 0.7,
-        0,
-        1,
-      );
 
     updateMatrices();
-
-    if (age >= CONFETTI_DURATION) {
-      active = false;
-      mesh.visible = false;
-    }
   }
 
 
   function reset() {
     active = false;
+    settled = false;
     mesh.visible = false;
     material.opacity = 1;
   }
