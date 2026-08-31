@@ -16,6 +16,7 @@ import {
 
 import {
   playGiftDrop,
+  playGiftWiggle,
   playLidFall,
   playBoxOpen,
   playCakeReveal,
@@ -52,6 +53,8 @@ import {
 
 import {
   playFallingSound,
+  playOpeningSound,
+  getOpeningSoundDuration,
 } from "./audio.js";
 
 const SHOWCASE_Y_ROTATION =
@@ -505,6 +508,9 @@ const ribbonInteraction =
       console.log(
         "Ruban entièrement tiré !"
       );
+
+      playOpeningSound();
+      playGiftWiggle(giftRoot, getOpeningSoundDuration() - 2000);
 
       const lidTimeline =
         playLidFall({

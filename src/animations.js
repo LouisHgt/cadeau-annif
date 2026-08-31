@@ -149,6 +149,86 @@ export function playGiftDrop(
   return tl;
 }
 
+export function playGiftWiggle(gift, time = 2000) {
+  gsap.killTweensOf(gift.rotation);
+  gsap.killTweensOf(gift.position);
+
+  const startRotation = {
+    x: gift.rotation.x,
+    y: gift.rotation.y,
+    z: gift.rotation.z,
+  };
+
+  const startPosition = {
+    x: gift.position.x,
+    y: gift.position.y,
+    z: gift.position.z,
+  };
+
+  const cycleDuration = 0.26;
+  const totalDurationSeconds = Math.max(0.26, time / 1000);
+  const repeatCount = Math.max(1, Math.ceil(totalDurationSeconds / cycleDuration) - 1);
+
+  const tl = gsap.timeline({
+    repeat: repeatCount,
+    repeatDelay: 0,
+    defaults: {
+      duration: 0.04,
+      ease: "sine.inOut",
+    },
+  });
+
+  tl.to(gift.rotation, {
+    x: startRotation.x + 0.10,
+    y: startRotation.y + 0.12,
+    z: startRotation.z + 0.06,
+  });
+
+  tl.to(gift.rotation, {
+    x: startRotation.x - 0.12,
+    y: startRotation.y - 0.10,
+    z: startRotation.z - 0.08,
+  });
+
+  tl.to(gift.rotation, {
+    x: startRotation.x + 0.08,
+    y: startRotation.y + 0.14,
+    z: startRotation.z + 0.05,
+  });
+
+  tl.to(gift.rotation, {
+    x: startRotation.x - 0.06,
+    y: startRotation.y - 0.08,
+    z: startRotation.z - 0.04,
+  });
+
+  tl.to(gift.rotation, {
+    x: startRotation.x,
+    y: startRotation.y,
+    z: startRotation.z,
+    duration: 0.08,
+    ease: "power2.out",
+  });
+
+  tl.to(gift.position, {
+    x: startPosition.x + 0.04,
+    y: startPosition.y + 0.02,
+    z: startPosition.z - 0.04,
+    duration: 0.02,
+    ease: "sine.inOut",
+  }, 0);
+
+  tl.to(gift.position, {
+    x: startPosition.x,
+    y: startPosition.y,
+    z: startPosition.z,
+    duration: 0.12,
+    ease: "power2.out",
+  }, ">-0.02");
+
+  return tl;
+}
+
 export function playLidFall({
   lid,
   ribbonLid,

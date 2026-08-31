@@ -52,6 +52,9 @@ export function playOpeningSound() {
   return openingAudio.play();
 }
 
+export function getOpeningSoundDuration() {
+  return openingAudio.duration() * 1000;
+}
 
 export function playBackgroundSound() {
   return backgroundAudio.play();
