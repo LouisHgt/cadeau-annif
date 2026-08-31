@@ -985,3 +985,9 @@ joyeux anniversaire
 ```
 
 C’est le cœur du projet.
+
+Deploiement :
+git pull
+npm ci
+npm run build -- --base=/cadeau-annif/
+sudo systemctl restart cadeau-annif // Si back touché
