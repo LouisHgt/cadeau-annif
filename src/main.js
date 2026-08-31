@@ -15,6 +15,10 @@ import {
 } from "./retro-renderer.js";
 
 import {
+  createRetroFloorTexture,
+} from "./floor.js";
+
+import {
   playGiftDrop,
   playGiftWiggle,
   playLidFall,
@@ -154,20 +158,19 @@ scene.add(mainLight);
 // SOL
 // =====================================================
 
+const floorTexture = createRetroFloorTexture();
+
 const floor =
   new THREE.Mesh(
-    new THREE.PlaneGeometry(
-      20,
-      20,
-    ),
-
+    new THREE.PlaneGeometry(20, 20),
     new THREE.MeshLambertMaterial({
-      color: 0x17131d,
+      map: floorTexture,
+      color: 0xffffff,
     }),
   );
 
-floor.rotation.x =
-  -Math.PI / 2;
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.001;
 
 scene.add(floor);
 
