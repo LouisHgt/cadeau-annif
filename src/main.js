@@ -510,82 +510,89 @@ const ribbonInteraction =
         "Ruban entièrement tiré !"
       );
 
-      playOpeningSound();
-      playGiftWiggle(giftRoot, getOpeningSoundDuration() - 2000);
-      fadeInBackgroundSound();
+      const giftTimeline = 
+        playOpeningSound();
+        playGiftWiggle(giftRoot, getOpeningSoundDuration() - 2000);
       
-      const lidTimeline =
-        playLidFall({
-          lid:
-            giftParts.lid,
+        giftTimeline.eventCallback(
+          "onComplete",
+          () => {
+            fadeInBackgroundSound();
 
-          ribbonLid:
-            giftParts.ribbonLid,
+            const lidTimeline =
+          playLidFall({
+            lid:
+              giftParts.lid,
 
-          bow:
-            giftParts.bow,
+            ribbonLid:
+              giftParts.ribbonLid,
 
-          pullTail:
-            giftParts.pullTail,
+            bow:
+              giftParts.bow,
 
-          scene,
+            pullTail:
+              giftParts.pullTail,
 
-          camera,
-        });
+            scene,
 
-
-      lidTimeline.eventCallback(
-        "onComplete",
-        () => {
-          const boxTimeline =
-            playBoxOpen({
-              box:
-                giftParts.box,
-
-              boxFront:
-                giftParts.boxFront,
-
-              boxBack:
-                giftParts.boxBack,
-
-              boxLeft:
-                giftParts.boxLeft,
-
-              boxRight:
-                giftParts.boxRight,
-
-              ribbonFront:
-                giftParts.ribbonFront,
-
-              ribbonBack:
-                giftParts.ribbonBack,
-
-              ribbonLeft:
-                giftParts.ribbonLeft,
-
-              ribbonRight:
-                giftParts.ribbonRight,
-            });
+            camera,
+          });
 
 
-          boxTimeline.eventCallback(
-            "onComplete",
-            () => {
-              const cakeTimeline =
-                playCakeReveal(
-                  cakeRoot
+        lidTimeline.eventCallback(
+          "onComplete",
+          () => {
+            const boxTimeline =
+              playBoxOpen({
+                box:
+                  giftParts.box,
+
+                boxFront:
+                  giftParts.boxFront,
+
+                boxBack:
+                  giftParts.boxBack,
+
+                boxLeft:
+                  giftParts.boxLeft,
+
+                boxRight:
+                  giftParts.boxRight,
+
+                ribbonFront:
+                  giftParts.ribbonFront,
+
+                ribbonBack:
+                  giftParts.ribbonBack,
+
+                ribbonLeft:
+                  giftParts.ribbonLeft,
+
+                ribbonRight:
+                  giftParts.ribbonRight,
+              });
+
+
+            boxTimeline.eventCallback(
+              "onComplete",
+              () => {
+                const cakeTimeline =
+                  playCakeReveal(
+                    cakeRoot
+                  );
+
+                cakeTimeline.eventCallback(
+                  "onComplete",
+                  () => {
+                    wishDialog.show({
+                      delay: 400,
+                    });
+                  }
                 );
-
-              cakeTimeline.eventCallback(
-                "onComplete",
-                () => {
-                  wishDialog.show({
-                    delay: 400,
-                  });
-                }
-              );
-            }
-          );
+              }
+            );
+          }
+        );
         }
       );
     },

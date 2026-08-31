@@ -19,7 +19,7 @@ const fallingSound =
   new Howl({
     src: [fallingSoundUrl],
     loop: false,
-    volume: 0.5,
+    volume: 0.2,
     preload: true,
   });
 
@@ -58,9 +58,10 @@ export function getOpeningSoundDuration() {
 
 
 export function fadeInBackgroundSound() {
+  backgroundAudio.play();
   backgroundAudio.fade(
     0,
-    1,
+    0.5,
     1000,
   );
 }
