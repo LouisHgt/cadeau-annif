@@ -55,6 +55,7 @@ import {
   playFallingSound,
   playOpeningSound,
   getOpeningSoundDuration,
+  fadeInBackgroundSound,
 } from "./audio.js";
 
 const SHOWCASE_Y_ROTATION =
@@ -511,7 +512,8 @@ const ribbonInteraction =
 
       playOpeningSound();
       playGiftWiggle(giftRoot, getOpeningSoundDuration() - 2000);
-
+      fadeInBackgroundSound();
+      
       const lidTimeline =
         playLidFall({
           lid:

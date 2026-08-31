@@ -56,23 +56,10 @@ export function getOpeningSoundDuration() {
   return openingAudio.duration() * 1000;
 }
 
-export function playBackgroundSound() {
-  return backgroundAudio.play();
-}
-
-
-export function fadeOutBackgroundSound() {
-  backgroundAudio.fade(
-    backgroundAudio.volume(),
-    0,
-    1000,
-  );
-}
-
 
 export function fadeInBackgroundSound() {
   backgroundAudio.fade(
-    backgroundAudio.volume(),
+    0,
     1,
     1000,
   );
